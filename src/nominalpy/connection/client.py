@@ -110,7 +110,7 @@ class Client:
         # If there is no token, set the URL to the base URL
         else:
             self.url = self.base_url
-            print("No token provided, using base URL for API requests.")
+            printer.warning("No token provided. Using the base URL for API requests.")
 
     def _sync_cleanup(self):
         """
@@ -215,7 +215,7 @@ class Client:
                 # Print the request details for debugging
                 printer.log(f"Requesting {method} {url} with data: {body}")
 
-                for attempt in range(3):
+                for attempt in range(30):
                     try:
                         async with session.request(
                             method,
@@ -247,8 +247,8 @@ class Client:
                                 future.set_result(result)
                             break
                     except (aiohttp.ClientError, NominalException) as e:
-                        if attempt < 2:
-                            await asyncio.sleep(1)
+                        if attempt < 29:
+                            await asyncio.sleep(0.1)
                             continue
                         if not future.done():
                             future.set_exception(
@@ -294,7 +294,7 @@ class Client:
         future = asyncio.Future()
         await self.queues[id].put((method, endpoint, data, future))
         try:
-            async with asyncio.timeout(200.0):
+            async with asyncio.timeout(600.0):
                 return await future
         except asyncio.TimeoutError:
             if not future.done():
