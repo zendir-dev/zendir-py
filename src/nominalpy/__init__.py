@@ -1,5 +1,5 @@
-# Define the version
-__version__ = "1.2.0"
+# Define the version of the package
+__version__ = "1.3.0.0"
 
 # Import the standard utilities
 from .utils import NominalException, printer, helper
