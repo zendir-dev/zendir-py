@@ -6,7 +6,7 @@ with the 'nominalpy' module. Copyright Nominal Systems, 2025.
 """
 
 from typing import Optional, Dict, Union
-from nominalpy.utils import printer, NominalException
+from nominalpy.utils import printer, NominalException, helper
 import asyncio, aiohttp, json, atexit
 import requests, time
 from typing import Optional, Union, Dict, Any, List
@@ -50,7 +50,8 @@ class Client:
                 valid_sessions: List[str] = [
                     session["guid"]
                     for session in self.session_info
-                    if "version" not in session or session["version"] == version
+                    if ("version" not in session or session["version"] == version)
+                    and helper.is_valid_guid(session["guid"])
                 ]
 
                 # If there are no valid sessions, use the first session
@@ -80,6 +81,20 @@ class Client:
                             printer.warning(
                                 "Using the first session with a different version. This may cause compatability issues."
                             )
+
+                # If more than one valid session, use the first valid session that is in a 'RUNNING' state
+                elif len(valid_sessions) > 1:
+                    session_id: str = next(
+                        (
+                            session["guid"]
+                            for session in self.session_info
+                            if session["guid"] in valid_sessions
+                            and session["status"] == "RUNNING"
+                        ),
+                        valid_sessions[0],
+                    )
+                    if not session_id:
+                        session_id = valid_sessions[0]
 
                 # Otherwise, use the first valid session
                 else:
