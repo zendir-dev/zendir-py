@@ -5,5 +5,8 @@ __version__ = "1.3.0.0"
 from .utils import NominalException, printer, helper
 
 # Import the standard classes that are commonly used
-from .connection import Credentials, Client
+from .connection import Client
 from .simulation import *
+
+# Include the runner utilities
+from .utils import runner

@@ -141,7 +141,7 @@ class Simulation(Context):
         self.__validate()
 
         # Dispose of the simulation and reset the state
-        await self.__client.delete(f"{self.get_id()}")
+        await self.__client.delete(f"{self.get_id()}", id=self.get_id())
         self.__reset()
         self.__id = None
         self.__client = None
