@@ -14,7 +14,7 @@ from .context import Context
 from .model import Model
 from .system import System
 from ..connection import Client
-from ..utils import NominalException, printer, helper
+from ..utils import ZendirException, printer, helper
 from ..data import SimulationData
 
 
@@ -71,7 +71,7 @@ class Simulation(Context):
 
         # If the client is are bad, throw an exception
         if not self.__client:
-            raise NominalException(
+            raise ZendirException(
                 "Failed to create a simulation due to invalid client."
             )
 
@@ -80,7 +80,7 @@ class Simulation(Context):
 
         # If the ID is not valid, throw an exception
         if not helper.is_valid_guid(self.__id):
-            raise NominalException(
+            raise ZendirException(
                 "Failed to create a simulation due to invalid simulation ID."
             )
 
@@ -104,7 +104,7 @@ class Simulation(Context):
         # Attempt to register a new simulation with the API
         id: str = await client.post("new", "Simulation")
         if not helper.is_valid_guid(id):
-            raise NominalException(
+            raise ZendirException(
                 "Failed to create a simulation due to invalid simulation ID."
             )
 
@@ -225,7 +225,7 @@ class Simulation(Context):
 
         # Throw exception if the simulation is not valid
         if not self.is_valid():
-            raise NominalException(
+            raise ZendirException(
                 "Failed to call function on an invalid or deleted simulation."
             )
 
@@ -313,7 +313,7 @@ class Simulation(Context):
 
         # See if the ID already exists in the local mapping
         if not helper.is_valid_guid(id):
-            raise NominalException(
+            raise ZendirException(
                 "Failed to find a instance with an ID as the guid was incorrect."
             )
 
@@ -355,7 +355,7 @@ class Simulation(Context):
 
         # If the ID is not valid, raise an exception
         if not helper.is_valid_guid(object_id):
-            raise NominalException(f"Failed to create object of type '{type}'.")
+            raise ZendirException(f"Failed to create object of type '{type}'.")
 
         # Create the object and add it to the array
         object: Object = Object(self, object_id, type=type)
@@ -442,7 +442,7 @@ class Simulation(Context):
 
         # If the ID is not valid, raise an exception
         if not helper.is_valid_guid(id):
-            raise NominalException(
+            raise ZendirException(
                 "Failed to create a object from an ID as the guid was incorrect."
             )
 
@@ -500,7 +500,7 @@ class Simulation(Context):
 
         # If the ID is not valid, raise an exception
         if not helper.is_valid_guid(behaviour_id):
-            raise NominalException(f"Failed to create behaviour of type '{type}'.")
+            raise ZendirException(f"Failed to create behaviour of type '{type}'.")
 
         # Create the behaviour and add it to the array
         behaviour: Behaviour = Behaviour(self, behaviour_id, type=type, parent=None)
@@ -575,7 +575,7 @@ class Simulation(Context):
 
         # If the ID is not valid, raise an exception
         if not helper.is_valid_guid(id):
-            raise NominalException("Failed to find behaviour with ID.")
+            raise ZendirException("Failed to find behaviour with ID.")
 
         # Validate if any of the current behaviours have the same ID
         for behaviour in self.__behaviours:
@@ -647,7 +647,7 @@ class Simulation(Context):
 
             # If the ID is not valid, raise an exception
             if not helper.is_valid_guid(id):
-                raise NominalException(f"Failed to create system of type '{type}'.")
+                raise ZendirException(f"Failed to create system of type '{type}'.")
 
         # Create the system object from the ID and update any kwargs if there are any
         system: System = System(self, id, type=type)
@@ -728,7 +728,7 @@ class Simulation(Context):
 
         # If the ID is not valid, raise an exception
         if not helper.is_valid_guid(message_id):
-            raise NominalException(f"Failed to create message of type '{type}'.")
+            raise ZendirException(f"Failed to create message of type '{type}'.")
 
         # Create the message and add it to the array
         message: Message = Message(self, message_id, type=type)
@@ -828,7 +828,7 @@ class Simulation(Context):
         # Grab the planet by invoking the method
         id: str = await system.invoke("GetBody", name)
         if not helper.is_valid_guid(id):
-            raise NominalException(f"Failed to create planet with name '{name}'.")
+            raise ZendirException(f"Failed to create planet with name '{name}'.")
 
         # Construct the object
         object: Object = Object(self, id, "CelestialBody")
@@ -857,7 +857,7 @@ class Simulation(Context):
 
         # If the ID is not valid, raise an exception
         if not helper.is_valid_guid(id):
-            raise NominalException(
+            raise ZendirException(
                 "Failed to create a message from an ID as the guid was incorrect."
             )
 
@@ -981,7 +981,7 @@ class Simulation(Context):
 
         # See if the ID already exists in the local mapping
         if not helper.is_valid_guid(id):
-            raise NominalException(
+            raise ZendirException(
                 "Failed to find a instance with an ID as the guid was incorrect."
             )
 
@@ -1013,7 +1013,7 @@ class Simulation(Context):
         # Get the structure of the simulation
         structure: dict = await system.invoke("GetSimulationStructure")
         if structure is None:
-            raise NominalException("Failed to load the simulation structure.")
+            raise ZendirException("Failed to load the simulation structure.")
 
         # Set the time of the simulation
         self.__time = float(structure.get("Time", 0.0))
@@ -1255,7 +1255,7 @@ class Simulation(Context):
 
         # Check if the path exists
         if not os.path.exists(path):
-            raise NominalException(
+            raise ZendirException(
                 f"Failed to load state from path '{path}' as it does not exist."
             )
 
@@ -1337,13 +1337,13 @@ class Simulation(Context):
 
         # If the time is zero, throw an exception
         if time < 1e-6:
-            raise NominalException(
+            raise ZendirException(
                 "Failed to tick simulation as the time is zero or negative."
             )
 
         # If the step is zero, throw an exception
         if step < 1e-6:
-            raise NominalException(
+            raise ZendirException(
                 "Failed to tick simulation as the step is zero or negative."
             )
 
@@ -1412,7 +1412,7 @@ class Simulation(Context):
 
         # If the interval is not positive, throw an exception
         if interval < 1e-6:
-            raise NominalException(
+            raise ZendirException(
                 "Failed to set tracking interval as the interval must be positive."
             )
 
@@ -1445,7 +1445,7 @@ class Simulation(Context):
 
         # If the ID is not a valid GUID, raise an exception
         if not helper.is_valid_guid(id):
-            raise NominalException("Failed to track object as the ID was not valid.")
+            raise ZendirException("Failed to track object as the ID was not valid.")
 
         # Invoke the track object on the API, with the ID and whether it is advanced
         await system.invoke("TrackObject", id, isAdvanced)
@@ -1481,7 +1481,7 @@ class Simulation(Context):
 
         # If the ID is not a valid GUID, raise an exception
         if not helper.is_valid_guid(id):
-            raise NominalException("Failed to query object as the ID was not valid.")
+            raise ZendirException("Failed to query object as the ID was not valid.")
 
         # Loop through all pages (which is at least 1)
         while page < page_count:
@@ -1502,7 +1502,7 @@ class Simulation(Context):
             # Update the page count
             # Handle the case where the page count is not present in the page data
             if "Count" not in page_data:
-                raise NominalException(
+                raise ZendirException(
                     "No data can be retrieved for this query. Make sure the data was subscribed to."
                 )
             page_count = page_data["Count"]

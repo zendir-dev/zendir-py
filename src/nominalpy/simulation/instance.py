@@ -3,7 +3,7 @@
 # to the public API. All code is under the the license provided along
 # with the 'nominalpy' module. Copyright Nominal Systems, 2025.
 
-from ..utils import NominalException, helper
+from ..utils import ZendirException, helper
 from .context import Context
 
 
@@ -45,11 +45,11 @@ class Instance:
 
         # Check if the context and ID are valid
         if not context:
-            raise NominalException("Failed to create instance due to invalid context.")
+            raise ZendirException("Failed to create instance due to invalid context.")
         if not context.get_client():
-            raise NominalException("Failed to create instance due to invalid client.")
+            raise ZendirException("Failed to create instance due to invalid client.")
         if not helper.is_valid_guid(id):
-            raise NominalException(
+            raise ZendirException(
                 f"Failed to create instance with an invalid ID '{id}'."
             )
 
@@ -117,7 +117,7 @@ class Instance:
             # Fetch the function library from the context
             function_library: Instance = await self._context.get_function_library()
             if not function_library:
-                raise NominalException(
+                raise ZendirException(
                     "Failed to get type of instance due to missing function library."
                 )
 
@@ -126,7 +126,7 @@ class Instance:
 
             # If the type is still None, raise an exception
             if not self.__type or self.__type == "":
-                raise NominalException(
+                raise ZendirException(
                     f"Failed to get type of instance with ID '{self.get_id()}'."
                 )
 
@@ -173,7 +173,7 @@ class Instance:
 
         # Check if the param is in the data
         if param not in self.__data:
-            raise NominalException(
+            raise ZendirException(
                 f"Failed to get parameter '{param}' in object '{self.get_id()}' of type '{await self.get_type()}'."
             )
         return self.__data[param]

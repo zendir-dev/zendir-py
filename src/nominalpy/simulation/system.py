@@ -3,7 +3,7 @@
 # to the public API. All code is under the the license provided along
 # with the 'nominalpy' module. Copyright Nominal Systems, 2024.
 
-from ..utils import printer, NominalException, helper
+from ..utils import printer, ZendirException, helper
 from .instance import Instance
 from .message import Message
 from .context import Context
@@ -89,7 +89,7 @@ class System(Instance):
         # Fetch the data
         message_id: str = await self.get(name)
         if not helper.is_valid_guid(message_id):
-            raise NominalException(f"Failed to find message with name '{name}'.")
+            raise ZendirException(f"Failed to find message with name '{name}'.")
 
         # Create the message object with the ID
         message = Message(self._context, message_id)

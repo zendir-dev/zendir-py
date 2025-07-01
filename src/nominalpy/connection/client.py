@@ -6,7 +6,7 @@ with the 'nominalpy' module. Copyright Nominal Systems, 2025.
 """
 
 from typing import Optional, Dict, Union
-from nominalpy.utils import printer, NominalException, helper
+from nominalpy.utils import printer, ZendirException, helper
 import asyncio, aiohttp, json, atexit
 import requests, time
 from typing import Optional, Union, Dict, Any, List
@@ -125,7 +125,11 @@ class Client:
         # If there is no token, set the URL to the base URL
         else:
             self.url = self.base_url
-            printer.warning("No token provided. Using the base URL for API requests.")
+            if "127.0.0.1" not in self.url and "localhost" not in self.url:
+                printer.warning(
+                    "No token provided. Using the base URL for API requests. "
+                    "This may not work as expected without authentication."
+                )
 
     def _sync_cleanup(self):
         """
@@ -198,7 +202,7 @@ class Client:
 
                 if session.closed:
                     if not future.done():
-                        future.set_exception(NominalException("Session closed"))
+                        future.set_exception(ZendirException("Session closed"))
                     queue.task_done()
                     continue
 
@@ -245,7 +249,7 @@ class Client:
                                 content_data: str = (
                                     content.decode("utf-8") if content else None
                                 )
-                                raise NominalException(
+                                raise ZendirException(
                                     f"Request failed: {response.status} {content_data}"
                                 )
                             result = None
@@ -261,13 +265,13 @@ class Client:
                             if not future.done():
                                 future.set_result(result)
                             break
-                    except (aiohttp.ClientError, NominalException) as e:
+                    except (aiohttp.ClientError, ZendirException) as e:
                         if attempt < 29:
                             await asyncio.sleep(0.1)
                             continue
                         if not future.done():
                             future.set_exception(
-                                NominalException(f"Request failed: {e}")
+                                ZendirException(f"Request failed: {e}")
                             )
                 queue.task_done()
             except asyncio.TimeoutError:
@@ -313,7 +317,7 @@ class Client:
                 return await future
         except asyncio.TimeoutError:
             if not future.done():
-                future.set_exception(NominalException("Request timed out"))
+                future.set_exception(ZendirException("Request timed out"))
             raise
 
     async def get(self, endpoint: str, id: str = "default"):
@@ -408,7 +412,7 @@ class Client:
 
         # Check if the response was successful
         if response.status_code != 200:
-            raise NominalException(
+            raise ZendirException(
                 f"Failed to list sessions with error: {response.status_code} {response.text}"
             )
 
@@ -416,11 +420,11 @@ class Client:
         try:
             session_info = response.json()
         except json.JSONDecodeError:
-            raise NominalException("Failed to decode response from server.")
+            raise ZendirException("Failed to decode response from server.")
 
         # Ensure the response is a list of session IDs
         if not isinstance(session_info, list):
-            raise NominalException(
+            raise ZendirException(
                 "Failed to list sessions as the server response was not a list."
             )
 
@@ -460,7 +464,7 @@ class Client:
 
             # If the session is not active, check if the timeout has been reached
             if time.time() - start_time > timeout:
-                raise NominalException(
+                raise ZendirException(
                     f"Session {session_id} did not become active within {timeout} seconds."
                 )
 
@@ -522,7 +526,7 @@ class Client:
 
         # Check if the response was successful
         if response.status_code != 200:
-            raise NominalException(
+            raise ZendirException(
                 f"Failed to create session: {response.status_code} {response.text}"
             )
 
@@ -530,13 +534,13 @@ class Client:
         try:
             session_info = response.json()
         except json.JSONDecodeError:
-            raise NominalException(
+            raise ZendirException(
                 "Failed to decode response from server when creating a session."
             )
 
         # If there is no 'guid' in the response, raise an exception
         if "guid" not in session_info:
-            raise NominalException(
+            raise ZendirException(
                 "Failed to create session: 'guid' not found in response."
             )
 
@@ -565,7 +569,7 @@ class Client:
 
         # Check if the response was successful
         if response.status_code != 200:
-            raise NominalException(
+            raise ZendirException(
                 f"Failed to delete session {session_id}: {response.status_code} {response.text}"
             )
 

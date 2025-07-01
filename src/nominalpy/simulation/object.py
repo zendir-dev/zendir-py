@@ -4,7 +4,7 @@
 # with the 'nominalpy' module. Copyright Nominal Systems, 2024.
 
 from __future__ import annotations
-from ..utils import printer, NominalException, helper
+from ..utils import printer, ZendirException, helper
 from .instance import Instance
 from .behaviour import Behaviour
 from .model import Model
@@ -208,19 +208,19 @@ class Object(Instance):
         # Get the function library
         function_library: Instance = await self._context.get_function_library()
         if function_library is None:
-            raise NominalException("Failed to get function library for the simulation.")
+            raise ZendirException("Failed to get function library for the simulation.")
 
         # Invoke the function library to create the object
         child_id: str = await function_library.invoke("AddObject", type, self.get_id())
 
         # If the ID is not valid, raise an exception
         if not helper.is_valid_guid(child_id):
-            raise NominalException(f"Failed to create child object of type '{type}'.")
+            raise ZendirException(f"Failed to create child object of type '{type}'.")
 
         # Create the object and add it to the array
         child: Object = self.__register_child(child_id, type)
         if child is None:
-            raise NominalException(f"Failed to create child object of type '{type}'.")
+            raise ZendirException(f"Failed to create child object of type '{type}'.")
 
         # If there are any kwargs, set them on the child object
         if len(kwargs) > 0:
@@ -347,7 +347,7 @@ class Object(Instance):
         # Get the function library
         function_library: Instance = await self._context.get_function_library()
         if function_library is None:
-            raise NominalException("Failed to get function library for the simulation.")
+            raise ZendirException("Failed to get function library for the simulation.")
 
         # Invoke the function library to create the behaviour
         behaviour_id: str = await function_library.invoke(
@@ -356,16 +356,12 @@ class Object(Instance):
 
         # If the ID is not valid, raise an exception
         if not helper.is_valid_guid(behaviour_id):
-            raise NominalException(
-                f"Failed to create child behaviour of type '{type}'."
-            )
+            raise ZendirException(f"Failed to create child behaviour of type '{type}'.")
 
         # Create the behaviour and add it to the array
         behaviour: Behaviour = self.__register_behaviour(behaviour_id, type)
         if behaviour is None:
-            raise NominalException(
-                f"Failed to create child behaviour of type '{type}'."
-            )
+            raise ZendirException(f"Failed to create child behaviour of type '{type}'.")
 
         # If there are any kwargs, set them on the child behaviour
         if len(kwargs) > 0:
@@ -511,7 +507,7 @@ class Object(Instance):
             f"{self.get_id()}/ivk", ["GetModel", type], id=self._context.get_id()
         )
         if not helper.is_valid_guid(id):
-            raise NominalException(f"Failed to create model of type '{type}'.")
+            raise ZendirException(f"Failed to create model of type '{type}'.")
 
         # Create the model with the ID
         model = self.__register_model(id, type)
@@ -574,7 +570,7 @@ class Object(Instance):
         # Fetch the data
         message_id: str = await self.get(name)
         if not helper.is_valid_guid(message_id):
-            raise NominalException(f"Failed to find message with name '{name}'.")
+            raise ZendirException(f"Failed to find message with name '{name}'.")
 
         # Create the message object with the ID
         message = Message(self._context, message_id)

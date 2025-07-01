@@ -12,7 +12,7 @@ some methods for serializing and deserializing JSON data to standard formats.
 import re
 import numpy as np
 from datetime import datetime
-from ..utils import NominalException
+from ..utils import ZendirException
 
 
 def empty_guid() -> str:
@@ -70,7 +70,7 @@ def validate_type(type: str) -> str:
 
     # Check for an invalid or missing
     if type == None or type == "":
-        raise NominalException(
+        raise ZendirException(
             "Invalid Type: No instance type passed when constructing an instance."
         )
 
