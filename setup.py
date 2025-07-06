@@ -2,13 +2,24 @@
 # This code is developed by Nominal Systems to aid with communication
 # to the public API. All code is under the the license provided along
 # with the 'nominalpy' module. Copyright Nominal Systems, 2024.
-
+import re
+from pathlib import Path
 from setuptools import setup, find_packages
+
+
+def get_version():
+    init_file = Path(__file__).parent / "src" / "nominalpy" / "__init__.py"
+    content = init_file.read_text()
+    match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', content)
+    if match:
+        return match.group(1)
+    raise RuntimeError("Cannot find version string.")
+
 
 # Setup the project
 setup(
     name="nominalpy",
-    version="1.2.0.0",
+    version=get_version(),
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     install_requires=[

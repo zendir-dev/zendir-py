@@ -1,1 +1,1 @@
-from .exception import NominalException
+from .exception import ZendirException

@@ -4,36 +4,34 @@
 # with the 'nominalpy' module. Copyright Nominal Systems, 2024.
 
 from __future__ import annotations
-import os, json, time
+import os, json
 import pandas as pd
 from .instance import Instance
 from .message import Message
 from .object import Object
 from .behaviour import Behaviour
+from .context import Context
 from .model import Model
 from .system import System
-from ..connection import Credentials, http_requests
-from ..utils import NominalException, printer, helper
+from ..connection import Client
+from ..utils import ZendirException, printer, helper
 from ..data import SimulationData
 
 
-# Define the systems used for extra functionality
-TRACKING_SYSTEM = "NominalSystems.Universe.TrackingSystem"
-EXTENSION_SYSTEM = "NominalSystems.Universe.ExtensionSystem"
-SOLAR_SYSTEM = "NominalSystems.Universe.SolarSystem"
-
-
-class Simulation:
+class Simulation(Context):
     """
     The Simulation class is the root object that is used to interact with the simulation.
     This can be used to create objects, behaviours, systems and messages within the simulation.
     Additionally, it can be used to track objects, query objects and save and load the state
-    of the simulation. A simulation requires credentials to be able to access the API. These
-    credentials are used to authenticate the user and ensure that the simulation is accessible.
+    of the simulation. A simulation requires a client to be able to access the API. These
+    clients are used to authenticate the user and ensure that the simulation is accessible.
     """
 
-    __credentials: Credentials = None
-    """Specifies the credentials for accessing the API correctly."""
+    __client: Client = None
+    """Defines the client that is used to access the API."""
+
+    __id: str = None
+    """Defines the ID of the simulation. This is used to identify the simulation within the API."""
 
     __objects: list[Object] = []
     """Defines all objects that are created within the simulation, with the simulation root."""
@@ -56,65 +54,120 @@ class Simulation:
     __ticked: bool = False
     """Defines whether the simulation has been ticked or not."""
 
-    __session_id: str = None
-    """Defines the session ID for the current working session, stored for public API keys."""
-
-    def __init__(self, credentials: Credentials, session_id: str = "") -> None:
+    def __init__(self, client: Client, id: str) -> None:
         """
-        Initialises the simulation with the credentials and the ID of the simulation. If the ID is
+        Initialises the simulation with the client and the ID of the simulation. If the ID is
         not provided, a new simulation will be created. If the reset flag is set to true, the simulation
         will be disposed and cleaned before initialising.
 
-        :param credentials:     The credentials to access the API
-        :type credentials:      Credentials
-        :param session_id:      The session ID for the current working session
-        :type session_id:       str
+        :param client:          The client to access the API
+        :type client:           Client
+        :param id:              The ID of the simulation that exists
+        :type id:               str
         """
 
+        # Store a reference to the client
+        self.__client: Client = client
+
+        # If the client is are bad, throw an exception
+        if not self.__client:
+            raise ZendirException(
+                "Failed to create a simulation due to invalid client."
+            )
+
         # Configure the root object
-        self.__credentials = credentials.copy()
-        self.__session_id = session_id
+        self.__id = id
 
-        # If the credentials are bad, throw an exception
-        if not self.__credentials:
-            raise NominalException(
-                "Invalid Credentials: No credentials passed into the Simulation."
-            )
-        if not self.__credentials.is_valid():
-            raise NominalException(
-                "Invalid Credentials: The credentials are missing information."
+        # If the ID is not valid, throw an exception
+        if not helper.is_valid_guid(self.__id):
+            raise ZendirException(
+                "Failed to create a simulation due to invalid simulation ID."
             )
 
-        # If the API is not local, then start creating a session
-        if not self.__credentials.is_local:
-            if self.__session_id == "" or self.__session_id is None:
-                raise NominalException(
-                    "Invalid Session: No session ID passed into the Simulation."
-                )
+        # Reset the objects and systems
+        self.__reset()
 
-            # Fetch if the session is active
-            first: bool = True
-            while True:
-                sessions: dict = Simulation.get_sessions(self.__credentials)
-                if self.__session_id not in sessions:
-                    raise NominalException(
-                        "Invalid Session: The session ID is not valid."
-                    )
-                if sessions[self.__session_id]:
-                    break
+    @classmethod
+    async def create(cls, client: Client) -> Simulation:
+        """
+        Creates a new simulation with the specified client. This will create a new simulation
+        session with the API and return the simulation that has been created. If the client is
+        invalid, an exception will be raised.
 
-                # Repeat until the session is ready
-                time.sleep(3.0)
-                if first:
-                    first = False
-                    printer.warning(
-                        "API session is in a pending state as the instance is starting. Please wait."
-                    )
-                else:
-                    printer.log("Waiting for session to be active...")
+        :param client:          The client to access the API
+        :type client:           Client
 
-            # Set the session ID in the credentials
-            self.__credentials.set_session_id(self.__session_id)
+        :returns:               The simulation that has been created
+        :rtype:                 Simulation
+        """
+
+        # Attempt to register a new simulation with the API
+        id: str = await client.post("new", "Simulation")
+        if not helper.is_valid_guid(id):
+            raise ZendirException(
+                "Failed to create a simulation due to invalid simulation ID."
+            )
+
+        # Create the simulation object with the ID and client
+        sim: Simulation = Simulation(client, id=id)
+        return sim
+
+    @classmethod
+    async def list(cls, client: Client) -> list[Simulation]:
+        """
+        Lists all the simulations that are currently running. This will return a list of
+        simulations that are currently running and their IDs. If the client is invalid, an
+        exception will be raised.
+
+        :param client:          The client to access the API
+        :type client:           Client
+
+        :returns:               The list of simulations that are currently running
+        :rtype:                 list[Simulation]
+        """
+
+        # Get the list of simulations from the API
+        result = await client.get("")
+        return [Simulation(client, id) for id in result]
+
+    async def dispose(self) -> None:
+        """
+        Disposes of the simulation. This will dispose of the simulation and clear all objects,
+        behaviours, systems and messages that have been created within the simulation. The
+        simulation can no longer be used after this has been called.
+        """
+
+        # Throw exception if the simulation is not valid
+        self.__validate()
+
+        # Dispose of the simulation and reset the state
+        await self.__client.delete(f"{self.get_id()}", id=self.get_id())
+        self.__reset()
+        self.__id = None
+        self.__client = None
+
+    @classmethod
+    async def dispose_all(cls, client: Client) -> None:
+        """
+        Disposes of all simulations that are currently running. This will dispose of all simulations
+        and clear all objects, behaviours, systems and messages that have been created within the
+        simulations. The simulations can no longer be used after this has been called.
+
+        :param client:          The client to access the API
+        :type client:           Client
+        """
+
+        # Dispose of all simulations
+        simulations: list[Simulation] = await cls.list(client)
+        for sim in simulations:
+            await sim.dispose()
+
+    def __reset(self) -> None:
+        """
+        Resets the simulation. This will reset the simulation and clear all objects, behaviours,
+        systems and messages that have been created within the simulation. This will also reset
+        the time of the simulation to zero.
+        """
 
         # Reset the objects and systems
         self.__objects = []
@@ -124,6 +177,72 @@ class Simulation:
         self.__planets = {}
         self.__time = 0.0
         self.__ticked = False
+
+    def get_id(self) -> str:
+        """
+        Returns the ID of the simulation. This is used to identify the simulation within the API.
+
+        :returns:   The ID of the simulation
+        :rtype:     str
+        """
+
+        # Return the ID of the simulation, which should have been set by the API
+        return self.__id
+
+    def get_client(self) -> Client:
+        """
+        Returns the client that is used to access the API. This is used to authenticate the user
+        and ensure that the simulation is accessible.
+
+        :returns:   The client that is used to access the API
+        :rtype:     Client
+        """
+
+        # Return the client that is used to access the API
+        return self.__client
+
+    def is_valid(self) -> bool:
+        """
+        Returns whether the simulation is valid or not. This will check if the simulation ID is
+        valid and if the client is valid. If the simulation ID is not valid, an exception will be raised.
+
+        :returns:   Whether the simulation is valid or not
+        :rtype:     bool
+        """
+
+        # Check if the simulation ID is valid
+        return (
+            self.get_id() != None
+            and helper.is_valid_guid(self.get_id())
+            and self.__client != None
+        )
+
+    def __validate(self) -> None:
+        """
+        Validates the simulation. This will ensure that the simulation is valid and that the ID
+        and client are set. If the simulation is not valid, an exception will be raised.
+        """
+
+        # Throw exception if the simulation is not valid
+        if not self.is_valid():
+            raise ZendirException(
+                "Failed to call function on an invalid or deleted simulation."
+            )
+
+    async def get_function_library(self) -> System:
+        """
+        Returns the function library for the simulation. This will return the function library
+        that is used to access the API and authenticate the user.
+
+        :returns:   The function library for the simulation
+        :rtype:     System
+        """
+
+        # Throw exception if the simulation is not valid
+        self.__validate()
+
+        # Create the request to the function
+        return await self.get_system("ExtensionSystem")
 
     def __require_refresh(self) -> None:
         """
@@ -143,7 +262,7 @@ class Simulation:
         for planet in self.__planets.values():
             planet._require_refresh()
 
-    def __find_instance(self, id: str) -> Instance:
+    def __find_registered_instance(self, id: str) -> Instance:
         """
         Attempts to find the instance with the specified ID within the simulation. This will
         search through all objects, behaviours, systems and messages to find the instance. If
@@ -157,23 +276,56 @@ class Simulation:
         """
 
         for object in self.__objects:
-            if object.id == id:
+            if object.get_id() == id:
                 return object
-            find: Instance = object.get_instance_by_id(id)
+            find: Instance = object.find_instance_with_id(id, True)
             if find != None:
                 return find
         for behaviour in self.__behaviours:
-            if behaviour.id == id:
+            if behaviour.get_id() == id:
                 return behaviour
+            find: Instance = behaviour.find_instance_with_id(id, True)
+            if find != None:
+                return find
         for system in self.__systems.values():
-            if system.id == id:
+            if system.get_id() == id:
                 return system
+            find: Instance = system.find_instance_with_id(id, True)
+            if find != None:
+                return find
         for message in self.__messages:
-            if message.id == id:
+            if message.get_id() == id:
                 return message
         return None
 
-    def add_object(self, type: str, **kwargs) -> Object:
+    async def __is_valid_instance_id(self, id: str) -> bool:
+        """
+        Attempts to check if the ID is a valid instance ID within the simulation. This will
+        call the API to check if the ID exists and is valid. If the ID is not valid, then this
+        will return False. If the ID is valid, then this will return True.
+
+        :param id:      The ID of the instance to check
+        :type id:       str
+
+        :returns:       Whether the ID is a valid instance ID or not
+        :rtype:         bool
+        """
+
+        # See if the ID already exists in the local mapping
+        if not helper.is_valid_guid(id):
+            raise ZendirException(
+                "Failed to find a instance with an ID as the guid was incorrect."
+            )
+
+        # Create the request to the function
+        result_id: str = await self.__client.post(
+            f"{self.get_id()}/ivk", ["FindObjectWithID", id], id=self.get_id()
+        )
+
+        # Return whether the ID is valid or not
+        return helper.is_valid_guid(result_id)
+
+    async def add_object(self, type: str, **kwargs) -> Object:
         """
         Adds an object to the simulation with the specified type and data. This will create
         an object within the simulation and return the object that has been created. If the
@@ -190,32 +342,88 @@ class Simulation:
         :rtype:         Object
         """
 
-        # Check if the type is missing 'NominalSystems' and add it
+        # Throw exception if the simulation is not valid
+        self.__validate()
+
+        # Check if the type is valid
         type = helper.validate_type(type)
 
-        # For each of the kwargs, serialize the data
-        for key in kwargs:
-            kwargs[key] = helper.serialize(kwargs[key])
+        # Create the Object ID
+        object_id: str = await self.__client.post(
+            f"{self.get_id()}/ivk", ["AddObject", type], id=self.get_id()
+        )
 
-        # Create the request
-        request: dict = {"type": type}
-        if len(kwargs) > 0:
-            request["data"] = kwargs
-
-        # Create the object using a post request
-        result = http_requests.post(self.__credentials, "object", request)
-        if result == None:
-            raise NominalException("Failed to create object of type '%s'." % type)
+        # If the ID is not valid, raise an exception
+        if not helper.is_valid_guid(object_id):
+            raise ZendirException(f"Failed to create object of type '{type}'.")
 
         # Create the object and add it to the array
-        object = Object(self.__credentials, result["guid"])
+        object: Object = Object(self, object_id, type=type)
         self.__objects.append(object)
 
+        # Set the data if the kwargs exist
+        if len(kwargs) > 0:
+            await object.set(**kwargs)
+
         # Print the success message
-        printer.success(f"Object of type '{type}' created successfully.")
+        printer.success(f"Successfully created object of type '{type}'.")
+
+        # Return the object
         return object
 
-    def get_object_by_id(self, id: str) -> Object:
+    def get_objects(self, recurse: bool = True) -> list[Object]:
+        """
+        Returns all the objects that have been created within the simulation. This will return
+        the objects as a list. If the recurse flag is set to true, all children of the objects
+        will be returned as well.
+
+        :param recurse:     Whether to return all children of the objects
+        :type recurse:      bool
+
+        :returns:           The objects that have been created within the simulation
+        :rtype:             list[Object]
+        """
+
+        # Throw exception if the simulation is not valid
+        self.__validate()
+
+        # Create a list of all objects.
+        objects: list[Object] = self.__objects.copy()
+
+        # If recursing, loop through all objects and get all children and then keep going
+        # down the chain of children to get all objects. This might be multiple levels deep.
+        if recurse:
+
+            # Define a recursive function to get all children of an object
+            def __inner_get_children(
+                child: Object, children: list[Object]
+            ) -> list[Object]:
+                for c in child.get_children():
+                    children.append(c)
+                    __inner_get_children(c, children)
+                return children
+
+            # Loop through all objects and get all children
+            for obj in self.__objects:
+                children: list[Object] = __inner_get_children(obj, [])
+                objects.extend(children)
+
+        # Return the objects
+        return objects
+
+    def get_root_objects(self) -> list[Object]:
+        """
+        Returns all the root objects that have been created within the simulation. This will
+        return all the objects that have been created directly within the simulation and not
+        part of any other object. This will return the objects as a list.
+
+        :returns:   The root objects that have been created within the simulation
+        :rtype:     list[Object]
+        """
+
+        return self.get_objects(recurse=False)
+
+    async def find_object_with_id(self, id: str) -> Object:
         """
         Attempts to find an object in the simulation with a specified ID. This will look through all objects
         that exist and will attempt to find one that has been created. If the object does not exist, it will
@@ -229,56 +437,40 @@ class Simulation:
         :rtype:     Object
         """
 
+        # Throw exception if the simulation is not valid
+        self.__validate()
+
         # If the ID is not valid, raise an exception
         if not helper.is_valid_guid(id):
-            raise NominalException(
+            raise ZendirException(
                 "Failed to create a object from an ID as the guid was incorrect."
             )
 
         # Validate if any of the current objects have the same ID
         for obj in self.__objects:
-            if obj.id == id:
+            if obj.get_id() == id:
                 return obj
 
             # Check children
-            obj: Object = obj.get_child_by_id(id)
+            obj: Object = obj.get_child_with_id(id, recurse=True)
             if obj != None:
                 return obj
 
-        # Create the object and add it to the array
-        obj = Object(self.__credentials, id)
-        self.__objects.append(obj)
+        # Attempt to find the object with the ID from the API
+        if not await self.__is_valid_instance_id(id):
+            return None
+
+        # Otherwise, assume it is a root object and create the Object instance
+        object: Object = Object(self, id)
+        self.__objects.append(object)
 
         # Print the success message
-        printer.success(f"Object with ID '{id}' created successfully.")
-        return obj
+        printer.success(f"Successfully created object with ID '{id}'.")
 
-    def get_objects(self, recurse: bool = True) -> list[Object]:
-        """
-        Returns all the objects that have been created within the simulation. This will return
-        all the objects that have been created within the simulation. This will return the objects
-        as a list. If the recurse flag is set to true, all children of the objects will be returned
-        as well.
+        # Return the object that has been found
+        return object
 
-        :param recurse:     Whether to return all children of the objects
-        :type recurse:      bool
-
-        :returns:           The objects that have been created within the simulation
-        :rtype:             list
-        """
-
-        # If the recurse flag is set to true, return all objects
-        if recurse:
-            objects: list = []
-            for obj in self.__objects:
-                objects.append(obj)
-                objects.extend(obj.get_children())
-            return objects
-
-        # Otherwise, return the objects
-        return self.__objects
-
-    def add_behaviour(self, type: str, **kwargs) -> Behaviour:
+    async def add_behaviour(self, type: str, **kwargs) -> Behaviour:
         """
         Adds a behaviour to the simulation with the specified type and data. This will create
         a behaviour within the simulation and return the behaviour that has been created. If the
@@ -295,32 +487,124 @@ class Simulation:
         :rtype:         Behaviour
         """
 
-        # Check if the type is missing 'NominalSystems' and add it
+        # Throw exception if the simulation is not valid
+        self.__validate()
+
+        # Check if the type is valid
         type = helper.validate_type(type)
 
-        # For each of the kwargs, serialize the data
-        for key in kwargs:
-            kwargs[key] = helper.serialize(kwargs[key])
+        # Create the behaviour ID
+        behaviour_id: str = await self.__client.post(
+            f"{self.get_id()}/ivk", ["AddObject", type], id=self.get_id()
+        )
 
-        # Create the request
-        request: dict = {"type": type}
-        if len(kwargs) > 0:
-            request["data"] = kwargs
-
-        # Create the behaviour using a post request
-        result = http_requests.post(self.__credentials, "object", request)
-        if result == None:
-            raise NominalException("Failed to create behaviour of type '%s'." % type)
+        # If the ID is not valid, raise an exception
+        if not helper.is_valid_guid(behaviour_id):
+            raise ZendirException(f"Failed to create behaviour of type '{type}'.")
 
         # Create the behaviour and add it to the array
-        behaviour = Behaviour(self.__credentials, result["guid"])
+        behaviour: Behaviour = Behaviour(self, behaviour_id, type=type, parent=None)
+        self.__behaviours.append(behaviour)
+
+        # Set the data if the kwargs exist
+        if len(kwargs) > 0:
+            await behaviour.set(**kwargs)
+
+        # Print the success message
+        printer.success(f"Successfully created behaviour of type '{type}'.")
+
+        # Return the behaviour
+        return behaviour
+
+    def get_behaviours(self, recurse: bool = True) -> list[Behaviour]:
+        """
+        Returns all the behaviours that have been created within the simulation. This will return
+        the behaviours as a list. If the recurse flag is set to true, all child behaviours of the objects
+        will be returned as well.
+
+        :param recurse:     Whether to return all behaviours of the objects
+        :type recurse:      bool
+
+        :returns:           The behaviours that have been created within the simulation
+        :rtype:             list[Behaviour]
+        """
+
+        # Throw exception if the simulation is not valid
+        self.__validate()
+
+        # Create a list of all behaviours
+        behaviours: list[Behaviour] = self.__behaviours.copy()
+
+        # If recursing, loop through all objects and get all behaviours
+        if recurse:
+            for obj in self.get_objects(True):
+
+                # Get the children of the object
+                child_behaviours: list[Behaviour] = obj.get_behaviours()
+                behaviours.extend(child_behaviours)
+
+        # Return the behaviours
+        return behaviours
+
+    def get_root_behaviours(self) -> list[Behaviour]:
+        """
+        Returns all the root behaviours that have been created within the simulation. This will
+        return all the behaviours that have been created directly within the simulation and not
+        part of any other object. This will return the behaviours as a list.
+
+        :returns:   The root behaviours that have been created within the simulation
+        :rtype:     list[Behaviour]
+        """
+
+        return self.get_behaviours(recurse=False)
+
+    async def find_behaviour_with_id(self, id: str) -> Behaviour:
+        """
+        Attempts to find a behaviour in the simulation with a specified ID. This will look through all behaviours
+        that exist and will attempt to find one that has been created.
+
+        :param id:  The ID of the behaviour to get
+        :type id:   str
+
+        :returns:   The behaviour that has been found
+        :rtype:     Behaviour
+        """
+
+        # Throw exception if the simulation is not valid
+        self.__validate()
+
+        # If the ID is not valid, raise an exception
+        if not helper.is_valid_guid(id):
+            raise ZendirException("Failed to find behaviour with ID.")
+
+        # Validate if any of the current behaviours have the same ID
+        for behaviour in self.__behaviours:
+            if behaviour.get_id() == id:
+                return behaviour
+
+        # Fetch the children
+        for child in self.get_objects(True):
+
+            # Check if the behaviour is in the children
+            for behaviour in child.get_behaviours():
+                if behaviour.get_id() == id:
+                    return behaviour
+
+        # Attempt to find the object with the ID from the API
+        if not await self.__is_valid_instance_id(id):
+            return None
+
+        # Otherwise, assume it is a root behaviour and create the Behaviour instance
+        behaviour: Behaviour = Behaviour(self, id)
         self.__behaviours.append(behaviour)
 
         # Print the success message
-        printer.success(f"Behaviour of type '{type}' created successfully.")
+        printer.success(f"Successfully created behaviour with ID '{id}'.")
+
+        # Return the behaviour that has been found
         return behaviour
 
-    def get_system(self, type: str, **kwargs) -> System:
+    async def get_system(self, type: str, **kwargs) -> System:
         """
         Attempts to get the system with the specified type within the simulation. If the system
         does not exist, it will be created with the specified type and data. If the system cannot
@@ -335,12 +619,11 @@ class Simulation:
         :rtype:         System
         """
 
-        # Check if the type is missing 'NominalSystems' and add it
-        type = helper.validate_type(type)
+        # Throw exception if the simulation is not valid
+        self.__validate()
 
-        # For each of the kwargs, serialize the data
-        for key in kwargs:
-            kwargs[key] = helper.serialize(kwargs[key])
+        # Check if the type is valid
+        type = helper.validate_type(type)
 
         # Check if the system exists and return it
         if type in self.__systems:
@@ -348,35 +631,74 @@ class Simulation:
 
             # Update the values if there are any
             if len(kwargs) > 0:
-                system.set(**kwargs)
+                await system.set(**kwargs)
             return system
 
-        # Otherwise, check if the system already exists
-        id: str = http_requests.patch(
-            self.__credentials, "simulation", {"name": "FindObject", "args": [type]}
+        # Attempt to find the object of type
+        id: str = await self.__client.post(
+            f"{self.get_id()}/ivk", ["FindObjectWithType", type], id=self.get_id()
         )
         if not helper.is_valid_guid(id):
 
-            # Create the request
-            request = {"type": type}
-            if len(kwargs) > 0:
-                request["data"] = kwargs
-
             # Attempt to create the system
-            response = http_requests.post(self.__credentials, "object", request)
-            if response == None:
-                raise NominalException("Failed to create system of type '%s'." % type)
-            id = response["guid"]
+            id = await self.__client.post(
+                f"{self.get_id()}/ivk", ["AddObject", type], id=self.get_id()
+            )
 
-        # Create the system object from the ID
-        system: System = System(self.__credentials, id)
+            # If the ID is not valid, raise an exception
+            if not helper.is_valid_guid(id):
+                raise ZendirException(f"Failed to create system of type '{type}'.")
+
+        # Create the system object from the ID and update any kwargs if there are any
+        system: System = System(self, id, type=type)
+        if len(kwargs) > 0:
+            await system.set(**kwargs)
         self.__systems[type] = system
 
         # Print the success message
-        printer.success(f"System of type '{type}' created successfully.")
+        printer.success(f"Successfully created system of type '{type}'.")
         return system
 
-    def add_message(self, type: str, **kwargs) -> Message:
+    def get_systems(self) -> list[System]:
+        """
+        Returns all the systems that have been created within the simulation. This will return
+        all the systems that have been created within the simulation as a list.
+
+        :returns:   The systems that have been created within the simulation
+        :rtype:     list[System]
+        """
+
+        # Throw exception if the simulation is not valid
+        self.__validate()
+
+        # Return the systems that have been created within the simulation
+        return list(self.__systems.values())
+
+    def get_models(self) -> list[Model]:
+        """
+        Returns all the models that have been created within the simulation. This will return
+        all the models that have been created within the simulation as a list.
+
+        :returns:   The models that have been created within the simulation
+        :rtype:     list[Model]
+        """
+
+        # Throw exception if the simulation is not valid
+        self.__validate()
+
+        # Fetch all objects
+        objects: list[Object] = self.get_objects(True)
+        models: list[Model] = []
+
+        # Loop through all objects and get all models
+        for obj in objects:
+            child_models: list[Model] = obj.get_models()
+            models.extend(child_models)
+
+        # Return the models that have been created within the simulation
+        return models
+
+    async def add_message(self, type: str, **kwargs) -> Message:
         """
         Creates a message within the simulation with the specified type and data. This will create
         a message within the simulation and return the message that has been created. If the message
@@ -393,59 +715,177 @@ class Simulation:
         :rtype:         Message
         """
 
-        # Check if the type is missing 'NominalSystems' and add it
-        type = helper.validate_type(type, "Messages")
+        # Throw exception if the simulation is not valid
+        self.__validate()
 
-        # For each of the kwargs, serialize the data
-        for key in kwargs:
-            kwargs[key] = helper.serialize(kwargs[key])
+        # Check if the type is valid
+        type = helper.validate_type(type)
 
-        # Create the request
-        request: dict = {"type": type}
-        if len(kwargs) > 0:
-            request["data"] = kwargs
+        # Create the message ID
+        message_id: str = await self.__client.post(
+            f"{self.get_id()}/ivk", ["AddObject", type], id=self.get_id()
+        )
 
-        # Create the behaviour using a post request
-        result = http_requests.post(self.__credentials, "object", request)
-        if result == None:
-            raise NominalException("Failed to create message of type '%s'." % type)
+        # If the ID is not valid, raise an exception
+        if not helper.is_valid_guid(message_id):
+            raise ZendirException(f"Failed to create message of type '{type}'.")
 
         # Create the message and add it to the array
-        message = Message(self.__credentials, result["guid"])
+        message: Message = Message(self, message_id, type=type)
         self.__messages.append(message)
 
+        # Set the data if the kwargs exist
+        if len(kwargs) > 0:
+            await message.set(**kwargs)
+
         # Print the success message
-        printer.success(f"Message of type '{type}' created successfully.")
+        printer.success(f"Successfully created message of type '{type}'.")
+
+        # Return the message
         return message
 
-    def add_message_by_id(self, id: str) -> Message:
+    def get_messages(self, recurse: bool = True) -> list[Message]:
         """
-        Adds a message to the simulation with the specified ID. This will create a message within
-        the simulation and return the message that has been created. If the message cannot be created,
-        an exception will be raised. This will add the message to the root of the simulation.
+        Returns all the messages that have been created within the simulation. This will return
+        the messages as a list. If the recurse flag is set to true, all child messages of the instances
+        will be returned as well.
+
+        :param recurse:     Whether to return all messages of the instances
+        :type recurse:      bool
+
+        :returns:           The messages that have been created within the simulation
+        :rtype:             list[Message]
+        """
+
+        # Throw exception if the simulation is not valid
+        self.__validate()
+
+        # Create a list of all messages
+        messages: list[Message] = self.__messages.copy()
+
+        # If recursing, loop through all objects and get all messages
+        if recurse:
+
+            # Loop through all objects and get all messages
+            for obj in self.get_objects(True):
+                child_messages: list[Message] = obj._Object__messages.values()
+                messages.extend(child_messages)
+
+            # Loop through all behaviours and get all messages
+            for behaviour in self.get_behaviours(True):
+                child_messages: list[Message] = behaviour._Behaviour__messages.values()
+                messages.extend(child_messages)
+
+            # Loop through all systems and get all messages
+            for system in self.get_systems():
+                child_messages: list[Message] = system._System__messages.values()
+                messages.extend(child_messages)
+
+            # Loop through all models and get all messages
+            for model in self.get_models():
+                child_messages: list[Message] = model._Model__messages.values()
+                messages.extend(child_messages)
+
+        # Return the messages
+        return messages
+
+    def get_root_messages(self) -> list[Message]:
+        """
+        Returns all the root messages that have been created within the simulation. This will
+        return all the messages that have been created directly within the simulation and not
+        part of any other object. This will return the messages as a list.
+
+        :returns:   The root messages that have been created within the simulation
+        :rtype:     list[Message]
+        """
+
+        return self.get_messages(recurse=False)
+
+    async def get_planet(self, name: str) -> Object:
+        """
+        Returns the planet with the specified name within the simulation. This will return the
+        planet object that has been created within the simulation. If the planet does not exist,
+        it will be created and returned. If the planet cannot be created, None will be returned.
+
+        :param name:    The name of the planet to get or create
+        :type name:     str
+
+        :returns:       The planet with the specified name
+        :rtype:         Object
+        """
+
+        # Throw exception if the simulation is not valid
+        self.__validate()
+
+        # Check if the planet already exists
+        name = name.strip().lower()
+        if name in self.__planets:
+            return self.__planets[name]
+
+        # Fetch the solar system
+        system: System = await self.get_system("SolarSystem")
+
+        # Grab the planet by invoking the method
+        id: str = await system.invoke("GetBody", name)
+        if not helper.is_valid_guid(id):
+            raise ZendirException(f"Failed to create planet with name '{name}'.")
+
+        # Construct the object
+        object: Object = Object(self, id, "CelestialBody")
+        self.__planets[name] = object
+        self.__objects.append(object)
+
+        # Return the object
+        return object
+
+    async def find_message_with_id(self, id: str) -> Message:
+        """
+        Attempts to find a message in the simulation with a specified ID. This will look through all messages
+        that exist and will attempt to find one that has been created. If the message does not exist, it will
+        create a Python message with the ID and, provided it exists in the simulation already, the data will
+        be fetched when used.
 
         :param id:  The ID of the message to create
         :type id:   str
 
-        :returns:   The message that has been created
+        :returns:   The message that has been found or newly created.
         :rtype:     Message
         """
 
+        # Throw exception if the simulation is not valid
+        self.__validate()
+
         # If the ID is not valid, raise an exception
         if not helper.is_valid_guid(id):
-            raise NominalException(
+            raise ZendirException(
                 "Failed to create a message from an ID as the guid was incorrect."
             )
 
-        # Create the message and add it to the array
-        message = Message(self.__credentials, id)
+        # Validate if any of the current messages have the same ID
+        for message in self.__messages:
+            if message.get_id() == id:
+                return message
+
+        # Loop through all objects and check for messages
+        for message in self.get_messages(recurse=True):
+            if message.get_id() == id:
+                return message
+
+        # Attempt to find the message with the ID from the API
+        if not await self.__is_valid_instance_id(id):
+            return None
+
+        # Otherwise, assume it is a root message and create the Message instance
+        message: Message = Message(self, id)
         self.__messages.append(message)
 
         # Print the success message
-        printer.success(f"Message with ID '{id}' created successfully.")
+        printer.success(f"Successfully created message with ID '{id}'.")
+
+        # Return the message that has been found
         return message
 
-    def find_instance_of_type(self, type: str) -> Instance:
+    async def find_instance_with_type(self, type: str) -> Instance:
         """
         Searches for an instance of the specified type within the simulation. If the instance
         does not exist, it will be created and returned. If the instance cannot be created, None
@@ -459,27 +899,30 @@ class Simulation:
         :rtype:         Instance
         """
 
-        # Check if the type is missing 'NominalSystems' and add it
+        # Throw exception if the simulation is not valid
+        self.__validate()
+
+        # Check if the type is valid
         type = helper.validate_type(type)
 
         # Create the request to the function
-        result = http_requests.patch(
-            self.__credentials, "simulation", {"name": "FindObject", "args": [type]}
+        id: str = await self.__client.post(
+            f"{self.get_id()}/ivk", ["FindObjectWithType", type], id=self.get_id()
         )
 
         # If the result is not a valid GUID, return None
-        if not helper.is_valid_guid(result):
+        if not helper.is_valid_guid(id):
             return None
 
         # Otherwise, check if the instance is already in the list
-        instance: Instance = self.__find_instance(result)
+        instance: Instance = self.__find_registered_instance(id)
         if instance != None:
             return instance
 
         # Otherwise, create the instance and return it
-        return Instance(self.__credentials, result)
+        return Instance(self, id, type)
 
-    def find_instances_of_type(self, type: str) -> list:
+    async def find_instances_with_type(self, type: str) -> list[Instance]:
         """
         Finds all instances of the specified type within the simulation. This will search through
         all objects, behaviours, systems and messages within the simulation to find the instances.
@@ -489,15 +932,18 @@ class Simulation:
         :type type:     str
 
         :returns:       The instances of the specified type
-        :rtype:         list
+        :rtype:         list[Instance]
         """
 
-        # Check if the type is missing 'NominalSystems' and add it
+        # Throw exception if the simulation is not valid
+        self.__validate()
+
+        # Check if the type is valid
         type = helper.validate_type(type)
 
         # Create the request to the function
-        result = http_requests.patch(
-            self.__credentials, "simulation", {"name": "FindObjects", "args": [type]}
+        result = await self.__client.post(
+            f"{self.get_id()}/ivk", ["FindObjectsWithType", type], id=self.get_id()
         )
 
         # If the result is not a list or is empty, return a missing list
@@ -507,52 +953,337 @@ class Simulation:
         # Loop through the list
         instances: list = []
         for i in range(len(result)):
-            instance: Instance = self.__find_instance(result[i])
+            instance: Instance = self.__find_registered_instance(result[i])
             if instance != None:
                 instances.append(instance)
             else:
-                instances.append(Instance(self.__credentials, result[i]))
+                instances.append(Instance(self, result[i], type))
 
         # Return the list
         return instances
 
-    def get_root_objects(self) -> list[Object]:
+    async def find_instance_with_id(self, id: str) -> Instance:
         """
-        Returns all the root objects that have been created within the simulation. This will
-        return all the objects that have been created directly within the simulation and not
-        part of any other object. This will return the objects as a list.
+        Searches for an instance of the specified ID within the simulation. If the instance
+        does not exist, it will not be created. If the instance cannot be created, None
+        will be returned. This will search through all objects, behaviours, systems and messages
+        within the simulation to find the instance.
 
-        :returns:   The root objects that have been created within the simulation
-        :rtype:     list
-        """
+        :param id:    The ID of the instance to find
+        :type id:     str
 
-        return self.__objects
-
-    def get_root_behaviours(self) -> list[Behaviour]:
-        """
-        Returns all the root behaviours that have been created within the simulation. This will
-        return all the behaviours that have been created directly within the simulation and not
-        part of any other object. This will return the behaviours as a list.
-
-        :returns:   The root behaviours that have been created within the simulation
-        :rtype:     list
+        :returns:       The instance of the specified ID
+        :rtype:         Instance
         """
 
-        return self.__behaviours
+        # Throw exception if the simulation is not valid
+        self.__validate()
 
-    def get_systems(self) -> list[System]:
+        # See if the ID already exists in the local mapping
+        if not helper.is_valid_guid(id):
+            raise ZendirException(
+                "Failed to find a instance with an ID as the guid was incorrect."
+            )
+
+        # If the ID is already in the list, return it
+        instance: Instance = self.__find_registered_instance(id)
+        if instance != None:
+            return instance
+
+        # Create the request to the function
+        if not await self.__is_valid_instance_id(id):
+            return None
+
+        # Otherwise, create the instance and return it
+        return Instance(self, id)
+
+    async def __load_cache(self) -> None:
         """
-        Returns all the systems that have been created within the simulation. This will return
-        all the systems that have been created within the simulation. This will return the systems
-        as a list.
-
-        :returns:   The systems that have been created within the simulation
-        :rtype:     list
+        Loads the cache for the simulation. This will load all objects, behaviours, systems and messages
+        that have been created within the simulation. This will create all the appropriate instances and
+        objects in the correct structure.
         """
 
-        return list(self.__systems.values())
+        # Throw exception if the simulation is not valid
+        self.__validate()
 
-    def get_time(self) -> float:
+        # Get the extension system
+        system: System = await self.get_function_library()
+
+        # Get the structure of the simulation
+        structure: dict = await system.invoke("GetSimulationStructure")
+        if structure is None:
+            raise ZendirException("Failed to load the simulation structure.")
+
+        # Set the time of the simulation
+        self.__time = float(structure.get("Time", 0.0))
+        self.__ticked = self.__time > 0.0
+
+        # Defines a function to register a message with the instance
+        def __register_msg(instance: Instance, msg_data: dict) -> None:
+            msg: Message = Message(self, msg_data["ID"], type=msg_data["Type"])
+            name: str = msg_data.get("Name", "")
+            if type(instance) is System:
+                if name not in instance._System__messages:
+                    instance._System__messages[name] = msg
+            elif type(instance) is Behaviour:
+                if name not in instance._Behaviour__messages:
+                    instance._Behaviour__messages[name] = msg
+            elif type(instance) is Object:
+                if name not in instance._Object__messages:
+                    instance._Object__messages[name] = msg
+                    instance._Object__instances[msg.get_id()] = msg
+            elif type(instance) is Model:
+                if name not in instance._Model__messages:
+                    instance._Model__messages[name] = msg
+
+        # Defines a function to register a behaviour
+        def __register_behaviour(behaviour: Behaviour, behaviour_data: dict) -> None:
+
+            # Loop through all messages and register them
+            for msg_data in behaviour_data.get("Messages", []):
+                __register_msg(behaviour, msg_data)
+
+        # Defines a function to register a model
+        def __register_model(model: Model, model_data: dict) -> None:
+
+            # Loop through all messages and register them
+            for msg_data in model_data.get("Messages", []):
+                __register_msg(model, msg_data)
+
+        # Defines a function to register an object
+        def __register_object(object: Object, object_data: dict) -> None:
+
+            # Loop through all messages and register them
+            for msg_data in object_data.get("Messages", []):
+                __register_msg(object, msg_data)
+
+            # Loop through all models and register them
+            for model_data in object_data.get("Models", []):
+                model_type: str = model_data["Type"]
+                model: Model = None
+                if model_type in object._Object__models:
+                    model = object._Object__models[model_type]
+                else:
+                    model: Model = Model(
+                        self, model_data["ID"], type=model_type, parent=object
+                    )
+                    object._Object__models[model_type] = model
+                    object._Object__instances[model.get_id()] = model
+                __register_model(model, model_data)
+
+            # Loop through all behaviours and register them
+            for behaviour_data in object_data.get("Behaviours", []):
+                behaviour: Behaviour = None
+                for b in object._Object__behaviours:
+                    if b.get_id() == behaviour_data["ID"]:
+                        behaviour = b
+                        break
+                if behaviour is None:
+                    behaviour: Behaviour = Behaviour(
+                        self,
+                        id=behaviour_data["ID"],
+                        type=behaviour_data["Type"],
+                        parent=object,
+                    )
+                    object._Object__behaviours.append(behaviour)
+                    object._Object__instances[behaviour.get_id()] = behaviour
+                __register_behaviour(behaviour, behaviour_data)
+
+            # Loop through all children and register them
+            for child_data in object_data.get("Children", []):
+                child: Object = None
+                for c in object._Object__children:
+                    if c.get_id() == child_data["ID"]:
+                        child = c
+                        break
+                if child is None:
+                    child: Object = Object(
+                        self,
+                        id=child_data["ID"],
+                        type=child_data["Type"],
+                        parent=object,
+                    )
+                    object._Object__children.append(child)
+                    object._Object__instances[child.get_id()] = child
+                __register_object(child, child_data)
+
+        # Loop through all systems and create them
+        for system_data in structure.get("Systems", []):
+
+            # If the system already exists, get it, otherwise create it
+            system: System = None
+            if system_data["Type"] in self.__systems:
+                system = self.__systems[system_data["Type"]]
+            else:
+                system: System = System(
+                    self, id=system_data["ID"], type=system_data["Type"]
+                )
+                self.__systems[system._Instance__type] = system
+
+            # Register the messages in each system
+            messages: list = system_data.get("Messages", [])
+            for msg_data in messages:
+                __register_msg(system, msg_data)
+
+        # Loop through all behaviours and create them
+        for behaviour_data in structure.get("Behaviours", []):
+
+            # If the behaviour already exists, get it, otherwise create it
+            behaviour: Behaviour = None
+            for b in self.__behaviours:
+                if b.get_id() == behaviour_data["ID"]:
+                    behaviour = b
+                    break
+
+            # If the behaviour was not found, create it
+            if behaviour is None:
+                behaviour: Behaviour = Behaviour(
+                    self, id=behaviour_data["ID"], type=behaviour_data["Type"]
+                )
+                self.__behaviours.append(behaviour)
+
+            # Register the behaviour data
+            __register_behaviour(behaviour, behaviour_data)
+
+        # Loop through all objects and create them
+        for object_data in structure.get("Objects", []):
+
+            # If the object already exists, get it, otherwise create it
+            object: Object = None
+            for o in self.__objects:
+                if o.get_id() == object_data["ID"]:
+                    object = o
+                    break
+
+            # If the object was not found, create it
+            if object is None:
+                object: Object = Object(
+                    self, id=object_data["ID"], type=object_data["Type"]
+                )
+                self.__objects.append(object)
+
+            # Register the object data
+            __register_object(object, object_data)
+
+    async def get_state(self) -> dict:
+        """
+        Returns the state of the simulation. This will fetch the state from the API and return
+        the state as a dictionary.
+
+        :returns:   The state of the simulation
+        :rtype:     dict
+        """
+
+        # Throw exception if the simulation is not valid
+        self.__validate()
+
+        # Get the extension system
+        system: System = await self.get_function_library()
+
+        # Get the state of the simulation as a raw JSON, not processed and deserialized
+        # (which is what .invoke does).
+        return await self.get_client().post(
+            f"{system.get_id()}/ivk", ["GetState"], id=self.get_id()
+        )
+
+    async def save_state(self, path: str) -> None:
+        """
+        Saves the state of the simulation to the specified path. This will save the state of the
+        simulation to the path as a JSON file. If the path does not exist, an exception will be raised.
+
+        :param path:    The path to save the state of the simulation to
+        :type path:     str
+        """
+
+        # Get the state of the simulation as a raw JSON
+        state: dict = await self.get_state()
+
+        # Save the state to the path
+        with open(path, "w") as file:
+            json.dump(state, file)
+
+    async def set_state(self, state: dict) -> bool:
+        """
+        Sets the state of the simulation to the specified state from a JSON object. This
+        will also reset and load all objects, behaviours, systems and messages within the
+        simulation correctly, storing them into the Python module.
+
+        :param state:       The state to set the simulation to
+        :type state:        dict
+
+        :returns:       Whether the state was set successfully
+        :rtype:         bool
+        """
+
+        # Throw exception if the simulation is not valid
+        self.__validate()
+
+        # Clear the current state
+        self.__reset()
+
+        # Get the extension system
+        system: System = await self.get_function_library()
+
+        # Load the state of the simulation
+        success: bool = await system.invoke("SetState", state)
+        if not success:
+            return False
+
+        # Next, load the cache
+        await self.__load_cache()
+
+        # Ensure the refresh is required
+        self.__require_refresh()
+
+        # Return the success
+        return True
+
+    async def load_state(self, path: str) -> bool:
+        """
+        Loads the state of the simulation from the specified path. This will load the state of the
+        simulation from the path as a JSON file and return whether the state was loaded successfully.
+        If the path does not exist, an exception will be raised. This will also reset and load all objects,
+        behaviours, systems and messages within the simulation correctly, storing them into the Python module.
+
+        :param path:        The path to load the state of the simulation from
+        :type path:         str
+
+        :returns:       Whether the state was loaded successfully
+        :rtype:         bool
+        """
+
+        # Check if the path exists
+        if not os.path.exists(path):
+            raise ZendirException(
+                f"Failed to load state from path '{path}' as it does not exist."
+            )
+
+        # Load the state from the path
+        with open(path, "r") as file:
+            state: dict = json.load(file)
+            return await self.set_state(state)
+
+    async def reload_data(self) -> None:
+        """
+        Reloads the data of the simulation. This will reload all objects, behaviours, systems and messages
+        within the simulation correctly, storing them into the Python module. This is useful if the simulation
+        has been modified externally and the data needs to be refreshed.
+        """
+
+        # Throw exception if the simulation is not valid
+        self.__validate()
+
+        # Clear the current state
+        self.__reset()
+
+        # Load the cache
+        await self.__load_cache()
+
+        # Ensure the refresh is required
+        self.__require_refresh()
+
+    async def get_time(self) -> float:
         """
         Returns the current time of the simulation. This will fetch the time from the API
         and return the time as a floating point number.
@@ -561,37 +1292,21 @@ class Simulation:
         :rtype:     float
         """
 
+        # Throw exception if the simulation is not valid
+        self.__validate()
+
         # If the time is not zero, return the time
         if self.__time > 0:
             return self.__time
 
         # Get the extension system and grab the time
-        system: System = self.get_system(EXTENSION_SYSTEM)
-        self.__time = float(system.invoke("GetSimulationTime"))
+        system: System = await self.get_function_library()
+        self.__time = float(await system.invoke("GetSimulationTime"))
 
         # Return the time
         return self.__time
 
-    def reset(self) -> None:
-        """
-        Resets the simulation. This will reset the simulation and clear all objects, behaviours,
-        systems and messages that have been created within the simulation. This will also reset
-        the time of the simulation to zero.
-        """
-
-        # Reset the objects and systems
-        self.__objects = []
-        self.__behaviours = []
-        self.__systems = {}
-        self.__messages = []
-        self.__planets = {}
-        self.__time = 0.0
-        self.__ticked = False
-
-        # Ensure the simulation is reset
-        http_requests.patch(self.__credentials, "simulation", {"name": "Dispose"})
-
-    def tick(self, step: float = 1e-1) -> None:
+    async def tick(self, step: float = 0.1) -> None:
         """
         Ticks the simulation by the specified amount of time. This will invoke the tick function
         on the simulation and update the time by the specified amount. If the step is not provided,
@@ -601,28 +1316,15 @@ class Simulation:
         :type step:     float
         """
 
-        # If the simulation has not been ticked yet, call a tick with 0.0 to initialise the tracking data
-        if not self.__ticked:
-            system: System = self.get_system(EXTENSION_SYSTEM)
-            system.invoke("InitializeSimulation")
-            self.__ticked = True
+        # Tick the simulation by the specified amount of time
+        await self.tick_duration(step, step)
 
-        # Invoke the tick function on the simulation
-        http_requests.patch(
-            self.__credentials, "simulation", {"name": "TickSeconds", "args": [step]}
-        )
-
-        # Update the time
-        self.__time += step
-
-        # Ensure the refresh is required
-        self.__require_refresh()
-
-    def tick_duration(self, time: float, step: float = 1e-1) -> None:
+    async def tick_duration(self, time: float, step: float = 0.1) -> None:
         """
         Ticks the simulation by the specified amount of time. This will invoke the tick function
         on the simulation and update the time by the specified amount. If the step is not provided,
-        the default step of 0.1 seconds will be used.
+        the default step of 0.1 seconds will be used. If the step is too small, it will do the final
+        step with the remaining time.
 
         :param time:    The totalamount of time to tick the simulation by in seconds
         :type time:     float
@@ -630,188 +1332,97 @@ class Simulation:
         :type step:     float
         """
 
+        # Throw exception if the simulation is not valid
+        self.__validate()
+
+        # If the time is zero, throw an exception
+        if time < 1e-6:
+            raise ZendirException(
+                "Failed to tick simulation as the time is zero or negative."
+            )
+
+        # If the step is zero, throw an exception
+        if step < 1e-6:
+            raise ZendirException(
+                "Failed to tick simulation as the step is zero or negative."
+            )
+
         # Get the extension system
-        system: System = self.get_system(EXTENSION_SYSTEM)
+        system: System = await self.get_function_library()
 
         # If the simulation has not been ticked yet, call a tick with 0.0 to initialise the tracking data
         if not self.__ticked:
-            system.invoke("InitializeSimulation")
+            await system.invoke("InitializeSimulation")
             self.__ticked = True
 
         # Calculate the number of steps to take
         iterations = int(time / step)
 
+        # Determine the final time to tick to (roundede to 1microsecond precision)
+        final_time: float = round(time + self.__time, 6)
+
         # While there are steps remaining, tick
         while iterations > 0:
 
             # Tick the iterations and get the amount of iterations completed
-            result = system.invoke("TickIterations", iterations, step)
+            result = await system.invoke("TickIterations", iterations, step)
             iterations -= result
 
             # Update the time
             self.__time += result * step
 
-        # Ensure the refresh is required
-        self.__require_refresh()
-
-    def get_state(self) -> dict:
-        """
-        Returns the state of the simulation. This will fetch the state from the API and return
-        the state as a dictionary.
-
-        :returns:   The state of the simulation
-        :rtype:     dict
-        """
-
-        # Get the extension system
-        system: System = self.get_system(EXTENSION_SYSTEM)
-
-        # Get the state of the simulation
-        return system.invoke("GetState")
-
-    def save_state(self, path: str) -> None:
-        """
-        Saves the state of the simulation to the specified path. This will save the state of the
-        simulation to the path as a JSON file. If the path does not exist, an exception will be raised.
-
-        :param path:    The path to save the state of the simulation to
-        :type path:     str
-        """
-
-        # Get the state of the simulation
-        state: dict = self.get_state()
-
-        # Save the state to the path
-        with open(path, "w") as file:
-            json.dump(state, file)
-
-    def set_state(self, state: dict, cache_all: bool = False) -> bool:
-        """
-        Sets the state of the simulation to the specified state. This will set the state of the
-        simulation to the state provided and return whether the state was set successfully. This
-        must be in a valid JSON dictionary form. If the cache_all flag is set to true, all objects
-        in the simulation will be cached and pulled from the API, which may take some time.
-
-        :param state:       The state to set the simulation to
-        :type state:        dict
-        :param cache_all:   Whether to cache all objects in the simulation.
-        :type cache_all:    bool
-
-        :returns:       Whether the state was set successfully
-        :rtype:         bool
-        """
-
-        # Clear the current state
-        self.reset()
-
-        # Get the extension system
-        system: System = self.get_system(EXTENSION_SYSTEM)
-
-        # Load the state of the simulation
-        success: bool = system.invoke("SetState", state)
-        if not success:
-            return False
-
-        # Only do the following if the cache is required
-        if cache_all:
-
-            # Get the extension system
-            system: System = self.get_system(EXTENSION_SYSTEM)
-
-            # Fetch all root objects using 'GetRootObjects'
-            objects: list = system.invoke("GetRootObjects", helper.empty_guid())
-            for id in objects:
-                if helper.is_valid_guid(id):
-
-                    # Create the root object
-                    obj: Object = Object(self.__credentials, id)
-                    self.__objects.append(obj)
-
-                    # Register it properly
-                    self.__load_object(obj)
-
-            # Fetch all root behaviours
-            behaviours: list = system.invoke("GetRootBehaviours", helper.empty_guid())
-            for id in behaviours:
-                if helper.is_valid_guid(id):
-
-                    # Create the root behaviour
-                    beh: Behaviour = Behaviour(self.__credentials, id)
-                    beh.get_messages()
-                    self.__behaviours.append(beh)
+        # Check if there is any remaining time to tick
+        if abs(self.__time - final_time) > 1e-6:
+            await system.invoke("TickIterations", 1, final_time - self.__time)
+            self.__time = final_time
 
         # Ensure the refresh is required
         self.__require_refresh()
 
-        # Return the success
-        return True
-
-    def __load_object(self, parent: Object) -> None:
+    async def get_tracking_interval(self) -> float:
         """
-        Loads the object and its children from the API. This will load the object,
-        all its children, and all behaviours in the simulation.
+        Returns the current tracking interval for all the objects that have been tracked. This will
+        return the interval in simulation seconds. The default value is 10.0 seconds.
 
-        :param parent:  The parent object to load the children from
-        :type parent:   Object
+        :returns:   The interval to track the objects by in seconds
+        :rtype:     float
         """
 
-        # If the object is missing, skip
-        if parent == None:
-            return
+        # Throw exception if the simulation is not valid
+        self.__validate()
 
-        # Get the extension system
-        system: System = self.get_system(EXTENSION_SYSTEM)
+        # Get the tracking system
+        system: System = await self.get_system("TrackingSystem")
 
-        # Fetch all children objects using 'GetRootObjects'
-        children: list = system.invoke("GetRootObjects", parent.id)
-        for id in children:
-            if helper.is_valid_guid(id):
-                obj: Object = parent._Object__register_child_with_id(id)
-                self.__load_object(obj)
+        # Invoke the get track interval
+        return await system.get("Interval")
 
-        # Fetch all behaviours
-        behaviours: list = system.invoke("GetRootBehaviours", parent.id)
-        for id in behaviours:
-            if helper.is_valid_guid(id):
-                behaviour: Behaviour = parent._Object__register_behaviour_with_id(id)
-                behaviour.get_messages()
-
-        # Fetch all models
-        models: list = parent.invoke("GetModels")
-        for id in models:
-            if helper.is_valid_guid(id):
-                model: Model = parent._Object__register_model_with_id(id)
-                model.get_messages()
-
-        # Cache all messages and load them into memory
-        parent.get_messages()
-
-    def load_state(self, path: str, cache_all: bool = False) -> bool:
+    async def set_tracking_interval(self, interval: float) -> None:
         """
-        Loads the state of the simulation from the specified path. This will load the state of the
-        simulation from the path as a JSON file and return whether the state was loaded successfully.
-        If the path does not exist, an exception will be raised. If the cache_all flag is set to true,
-        all objects in the simulation will be cached and pulled from the API, which may take some time.
+        Updates the tracking interval for all the objects that have been tracked. This will
+        be an interval in simulation seconds and will be the same across all objects. The
+        default value is 10.0 seconds.
 
-        :param path:        The path to load the state of the simulation from
-        :type path:         str
-        :param cache_all:   Whether to cache all objects in the simulation.
-        :type cache_all:    bool
-
-        :returns:       Whether the state was loaded successfully
-        :rtype:         bool
+        :param interval:    The interval to track the objects by in seconds
+        :type interval:     float
         """
 
-        # Check if the path exists
-        if not os.path.exists(path):
-            raise NominalException(f"Path '{path}' does not exist.")
+        # Throw exception if the simulation is not valid
+        self.__validate()
 
-        # Load the state from the path
-        with open(path, "r") as file:
-            state: dict = json.load(file)
-            return self.set_state(state, cache_all)
+        # If the interval is not positive, throw an exception
+        if interval < 1e-6:
+            raise ZendirException(
+                "Failed to set tracking interval as the interval must be positive."
+            )
 
-    def track_object(self, instance: Instance, isAdvanced: bool = False) -> None:
+        # Get the tracking system
+        system: System = await self.get_system("TrackingSystem")
+
+        # Invoke the set track interval
+        await system.set(Interval=interval)
+
+    async def track_object(self, instance: Instance, isAdvanced: bool = False) -> None:
         """
         Starts tracking the object within the simulation. This will start tracking the object
         which will store the object's data and state every specified tick in a local database.
@@ -823,37 +1434,23 @@ class Simulation:
         :type isAdvanced:   bool
         """
 
-        # Get the tracking system
-        system: System = self.get_system(TRACKING_SYSTEM)
-
-        # Check if the ID is a string and a valid GUID, as the GUID could be passed in
-        # to the function instead.
-        if type(instance) is str and helper.is_valid_guid(instance):
-            system.invoke("TrackObject", instance, isAdvanced)
-        elif isinstance(instance, Instance):
-            system.invoke("TrackObject", instance.id, isAdvanced)
-        else:
-            raise NominalException(
-                "Failed to track object as the instance was not a valid type."
-            )
-
-    def set_tracking_interval(self, interval: float) -> None:
-        """
-        Updates the tracking interval for all the objects that have been tracked. This will
-        be an interval in simulation seconds and will be the same across all objects. The
-        default value is 10.0 seconds.
-
-        :param interval:    The interval to track the objects by in seconds
-        :type interval:     float
-        """
+        # Throw exception if the simulation is not valid
+        self.__validate()
 
         # Get the tracking system
-        system: System = self.get_system(TRACKING_SYSTEM)
+        system: System = await self.get_system("TrackingSystem")
 
-        # Invoke the set track interval
-        system.set(Interval=interval)
+        # Get the instance ID, based on whether it is an instance or a string
+        id: str = instance.get_id() if isinstance(instance, Instance) else instance
 
-    def query_object(self, instance: Instance) -> SimulationData:
+        # If the ID is not a valid GUID, raise an exception
+        if not helper.is_valid_guid(id):
+            raise ZendirException("Failed to track object as the ID was not valid.")
+
+        # Invoke the track object on the API, with the ID and whether it is advanced
+        await system.invoke("TrackObject", id, isAdvanced)
+
+    async def query_object(self, instance: Instance) -> SimulationData:
         """
         Queries the object within the simulation. This will query the object and return the data
         that has been stored for the object. This will return the data as a data frame. If there
@@ -868,22 +1465,29 @@ class Simulation:
         :rtype:             DataFrame
         """
 
+        # Throw exception if the simulation is not valid
+        self.__validate()
+
         # Get the tracking system
-        system: System = self.get_system(TRACKING_SYSTEM)
+        system: System = await self.get_system("TrackingSystem")
 
         # Store the total data and the current page being called
         data: dict = {}
         page_count: int = 1
         page: int = 0
 
+        # Get the instance ID, based on whether it is an instance or a string
+        id: str = instance.get_id() if isinstance(instance, Instance) else instance
+
+        # If the ID is not a valid GUID, raise an exception
+        if not helper.is_valid_guid(id):
+            raise ZendirException("Failed to query object as the ID was not valid.")
+
         # Loop through all pages (which is at least 1)
         while page < page_count:
 
-            # Get the instance ID, based on whether it is an instance or a string
-            id: str = instance.id if isinstance(instance, Instance) else instance
-
             # Invoke the query object on the API, with the current page
-            page_data: dict = system.invoke("ExportToAPI", id, page)
+            page_data: dict = await system.invoke("ExportToAPI", id, page)
             if page_data == None:
                 return None
 
@@ -898,7 +1502,7 @@ class Simulation:
             # Update the page count
             # Handle the case where the page count is not present in the page data
             if "Count" not in page_data:
-                raise NominalException(
+                raise ZendirException(
                     "No data can be retrieved for this query. Make sure the data was subscribed to."
                 )
             page_count = page_data["Count"]
@@ -911,40 +1515,7 @@ class Simulation:
         # Create and return the data frame
         return SimulationData(data)
 
-    def get_planet(self, name: str) -> Object:
-        """
-        Returns the planet with the specified name within the simulation. This will return the
-        planet object that has been created within the simulation. If the planet does not exist,
-        it will be created and returned. If the planet cannot be created, None will be returned.
-
-        :param name:    The name of the planet to get or create
-        :type name:     str
-
-        :returns:       The planet with the specified name
-        :rtype:         Object
-        """
-
-        # Check if the planet already exists
-        if name.lower() in self.__planets:
-            return self.__planets[name.lower()]
-
-        # Fetch the solar system
-        system: System = self.get_system(SOLAR_SYSTEM)
-
-        # Grab the planet by invoking the method
-        id = system.invoke("GetBody", name)
-        if not helper.is_valid_guid(id):
-            return None
-
-        # Construct the object
-        object: Object = Object(self.__credentials, id)
-        self.__planets[name.lower()] = object
-        self.__objects.append(object)
-
-        # Return the object
-        return object
-
-    def query_dataframe(self, instance: Instance) -> pd.DataFrame:
+    async def query_dataframe(self, instance: Instance) -> pd.DataFrame:
         """
         Queries the object within the simulation. This will query the object and return the data
         that has been stored for the object. This will return the data as a data frame. If there
@@ -957,157 +1528,6 @@ class Simulation:
         :returns:           The data that has been stored for the object
         :rtype:             DataFrame
         """
+
         # Create and return the data frame
-        return self.query_object(instance=instance).to_dataframe()
-
-    def get_credentials(self) -> Credentials:
-        """
-        Returns the credentials for the simulation. This will return the credentials that are
-        used to access the API and authenticate the user.
-
-        :returns:   The credentials for the simulation
-        :rtype:     Credentials
-        """
-        return self.__credentials
-
-    @classmethod
-    def get_sessions(cls, credentials: Credentials) -> dict:
-        """
-        Returns the active sessions that are currently running on the API for the user's
-        credentials. This will return a list of session IDs that are currently active. If
-        there are no active sessions, an empty list will be returned.
-
-        :param credentials:     The credentials to access the API
-        :type credentials:      Credentials
-
-        :returns:   The dictionary of sessions and whether they are active or not
-        :rtype:     dict
-        """
-
-        # Get the sessions from the API and throw an error if there are no sessions
-        result: list = http_requests.get(credentials, "session")
-        sessions: dict = {}
-        for r in result:
-            sessions[r["guid"]] = r["status"] == "RUNNING"
-        return sessions
-
-    @classmethod
-    def create_session(cls, credentials: Credentials) -> str:
-        """
-        Attempts to create a new session with the public API. This will create a new session
-        with the API and return the session ID. If the session cannot be created, an exception
-        will be raised.
-
-        :param credentials:     The credentials to access the API
-        :type credentials:      Credentials
-
-        :returns:   The session ID of the new session
-        :rtype:     str
-        """
-
-        # Output information about creating a sessiojn
-        printer.warning(
-            "Attempting to create a new session with your API key. This may take up to a minute."
-        )
-
-        # Create a new session from the API
-        data = {"version": credentials.version, "duration": 7200}
-        response = http_requests.post(credentials, "session", data=data)
-
-        # Check if there was no session, throw an error with the message
-        if "guid" not in response:
-            raise NominalException(
-                "Failed to create session. Message: %s" % str(response)
-            )
-
-        # Return the session
-        return response["guid"]
-
-    @classmethod
-    def get(
-        cls, credentials: Credentials, index: int = 0, reset: bool = True
-    ) -> Simulation:
-        """
-        This will attempt to create a simulation that is connected to the current session. If
-        the session does not exist, a new session will be created. Assuming that the simulation
-        is not running locally, it will use your access key to fetch the most recent simulation
-        or attempt to create one. Optionally, an index can be set to define which session to use.
-        If the index does not exist, it will attempt to create it.
-
-        :param credentials:     The credentials to access the API
-        :type credentials:      Credentials
-        :param index:           The index of the session to use
-        :type index:            int
-        :param reset:           Whether to reset the simulation before initialising
-        :type reset:            bool
-
-        :returns:   The simulation that has been created
-        :rtype:     Simulation
-        """
-
-        # If the credentials are bad, throw an exception
-        if not credentials:
-            raise NominalException(
-                "Invalid Credentials: No credentials passed into the Simulation."
-            )
-        if not credentials.is_valid():
-            raise NominalException(
-                "Invalid Credentials: The credentials are missing information."
-            )
-
-        # Check for local credentials and return a local simulation
-        if credentials.is_local:
-            simulation: Simulation = Simulation(credentials, "localhost")
-            if reset:
-                simulation.reset()
-            return simulation
-
-        # Fetch the sessions
-        sessions: dict = Simulation.get_sessions(credentials)
-
-        # If no sessions, create a new one
-        if sessions == None or len(sessions) <= index:
-            session = Simulation.create_session(credentials)
-            return Simulation(credentials, session_id=session)
-
-        # Otherwise, get the first active session found
-        else:
-            active_sessions: str = [s for s in sessions.keys() if sessions[s]]
-            if len(active_sessions) <= index:
-                session = list(sessions.keys())[index]
-            else:
-                session = active_sessions[index]
-
-            # Create the simulation and reset it if the parameter is passed through
-            simulation: Simulation = Simulation(credentials, session_id=session)
-            if reset:
-                simulation.reset()
-            return simulation
-
-    @classmethod
-    def create(cls, credentials: Credentials) -> Simulation:
-        """
-        Creates a new simulation with the specified credentials. This will create a new simulation
-        session with the API and return the simulation that has been created. If the credentials are
-        invalid, an exception will be raised.
-
-        :param credentials:     The credentials to access the API
-        :type credentials:      Credentials
-
-        :returns:   The simulation that has been created
-        :rtype:     Simulation
-        """
-
-        # If the credentials are bad, throw an exception
-        if not credentials:
-            raise NominalException(
-                "Invalid Credentials: No credentials passed into the Simulation."
-            )
-        if not credentials.is_valid():
-            raise NominalException(
-                "Invalid Credentials: The credentials are missing information."
-            )
-
-        # Create a new session and return it
-        session: str = Simulation.create_session(credentials)
-        return Simulation(credentials, session_id=session)
+        return (await self.query_object(instance=instance)).to_dataframe()

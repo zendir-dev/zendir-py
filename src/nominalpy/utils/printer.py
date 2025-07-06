@@ -10,6 +10,7 @@ If the verbosity is enabled, then data will be printed to the console.
 """
 
 import datetime
+import os
 
 
 # Defines ANSI escape sequences for colors
@@ -72,6 +73,16 @@ def set_verbosity(level: int) -> None:
     else:
         __verbose_level = 0
         __verbose = False
+
+
+def clear() -> None:
+    """
+    Clears the console output, if possible. This is useful for
+    clearing the screen before printing new data.
+    """
+
+    # Clear the terminal screen
+    os.system("cls" if os.name == "nt" else "clear")
 
 
 def output(data: str, color: str = "") -> None:

@@ -15,10 +15,10 @@ from . import constants
 from . import utils
 from .kinematics import euler2, euler3
 from .utils import normalize_angle
-from ..utils import NominalException
+from ..utils import ZendirException
 
 
-def get_planet_property (planet: str, property: str) -> float:
+def get_planet_property(planet: str, property: str) -> float:
     """
     Returns the planet's property. If the planet does not exist,
     then an exception will be thrown.
@@ -37,10 +37,10 @@ def get_planet_property (planet: str, property: str) -> float:
 
     # Throw an error if this occurs
     else:
-        raise NominalException(f"No planet: {planet} with property {property}.")
+        raise ZendirException(f"No planet: {planet} with property {property}.")
 
 
-def get_planet_mu (planet: str) -> float:
+def get_planet_mu(planet: str) -> float:
     """
     Returns the planet's gravitational mu parameter, equal to GM of the
     planet's body in units of [m^3/s^2]. If the planet does not exist,
@@ -55,11 +55,9 @@ def get_planet_mu (planet: str) -> float:
     return get_planet_property(planet, "MU")
 
 
-def t_perifocal_to_vector_elements (
-    right_ascension: float = 0,
-    argument_of_periapsis: float = 0,
-    inclination: float = 0
-)-> np.ndarray:
+def t_perifocal_to_vector_elements(
+    right_ascension: float = 0, argument_of_periapsis: float = 0, inclination: float = 0
+) -> np.ndarray:
     """
     Creates the transformation matrix to convert perifocal coordinates into
     Planet-Centered Inertial (PCI) coordinates.
@@ -89,11 +87,22 @@ def t_perifocal_to_vector_elements (
     s_raan = np.sin(right_ascension)
     s_aop = np.sin(argument_of_periapsis)
     s_inc = np.sin(inclination)
-    TIP = np.array([
-        [c_aop * c_raan - s_aop * c_inc * s_raan, -s_aop * c_raan - c_aop * c_inc * s_raan, s_raan * s_inc],
-        [c_aop * s_raan + s_aop * c_inc * c_raan, c_aop * c_inc * c_raan - s_aop * s_raan, -c_raan * s_inc],
-        [s_aop * s_inc, c_aop * s_inc, c_inc]
-    ], dtype=np.float64)
+    TIP = np.array(
+        [
+            [
+                c_aop * c_raan - s_aop * c_inc * s_raan,
+                -s_aop * c_raan - c_aop * c_inc * s_raan,
+                s_raan * s_inc,
+            ],
+            [
+                c_aop * s_raan + s_aop * c_inc * c_raan,
+                c_aop * c_inc * c_raan - s_aop * s_raan,
+                -c_raan * s_inc,
+            ],
+            [s_aop * s_inc, c_aop * s_inc, c_inc],
+        ],
+        dtype=np.float64,
+    )
     return TIP
 
 
@@ -136,7 +145,7 @@ def perifocal_to_vector_elements(
     TIP = t_perifocal_to_vector_elements(
         right_ascension=right_ascension,
         argument_of_periapsis=argument_of_periapsis,
-        inclination=inclination
+        inclination=inclination,
     )
     # perform that matrix multiplication assuming that the position and velocity vector are 3x1 vectors
     r_bn_n = TIP @ r_bp_p
@@ -151,7 +160,7 @@ def semi_latus_rectum_to_vector_elements(
     right_ascension: float = 0.0,
     argument_of_periapsis: float = 0.0,
     true_anomaly: float = 0.0,
-    planet: str = "earth"
+    planet: str = "earth",
 ) -> tuple:
     """
     Transforms Keplerian orbital elements into position and velocity in Planet-Centered
@@ -189,24 +198,26 @@ def semi_latus_rectum_to_vector_elements(
     # position and velocity in perifocal coordinates
     denom = 1 + eccentricity * np.cos(true_anomaly)
     # calculate the perifocal position and velocity
-    r_bp_p = np.array([
-        semi_latus_rectum * np.cos(true_anomaly) / denom,
-        semi_latus_rectum * np.sin(true_anomaly) / denom,
-        0
-    ], dtype=np.float64)
+    r_bp_p = np.array(
+        [
+            semi_latus_rectum * np.cos(true_anomaly) / denom,
+            semi_latus_rectum * np.sin(true_anomaly) / denom,
+            0,
+        ],
+        dtype=np.float64,
+    )
     rat = np.sqrt(mu / semi_latus_rectum)
-    v_bp_p = np.array([
-        -rat * np.sin(true_anomaly),
-        rat * (eccentricity + np.cos(true_anomaly)),
-        0
-    ], dtype=np.float64)
+    v_bp_p = np.array(
+        [-rat * np.sin(true_anomaly), rat * (eccentricity + np.cos(true_anomaly)), 0],
+        dtype=np.float64,
+    )
     # calculate the pci position and velocity
     return perifocal_to_vector_elements(
         r_bp_p=r_bp_p,
         v_bp_p=v_bp_p,
         right_ascension=right_ascension,
         argument_of_periapsis=argument_of_periapsis,
-        inclination=inclination
+        inclination=inclination,
     )
 
 
@@ -217,7 +228,7 @@ def classical_to_vector_elements(
     right_ascension: float = 0.0,
     argument_of_periapsis: float = 0.0,
     true_anomaly: float = 0.0,
-    planet: str = "earth"
+    planet: str = "earth",
 ) -> tuple:
     """
     Transforms Keplerian orbital elements into position and velocity in Planet-Centered
@@ -253,7 +264,9 @@ def classical_to_vector_elements(
     if eccentricity == 1:
         # parabolic orbit, the semi-latus rectum can't be calculated from input orbital elements. Therefore, the user
         #   should use an alternative function
-        raise ValueError("The input orbit is parabolic. The semi-latus rectum can't be calculated, please use different function.")
+        raise ValueError(
+            "The input orbit is parabolic. The semi-latus rectum can't be calculated, please use different function."
+        )
     elif eccentricity >= 0:
         # circular, elliptical or hyperbolic orbit
         p = semi_major_axis * (1 - eccentricity * eccentricity)
@@ -277,7 +290,7 @@ def classical_to_vector_elements_deg(
     right_ascension: float = 0.0,
     argument_of_periapsis: float = 0.0,
     true_anomaly: float = 0.0,
-    planet: str = "earth"
+    planet: str = "earth",
 ) -> tuple:
     """
     Transforms Keplerian orbital elements into position and velocity in Planet-Centered
@@ -316,14 +329,12 @@ def classical_to_vector_elements_deg(
         right_ascension=np.radians(right_ascension),
         argument_of_periapsis=np.radians(argument_of_periapsis),
         true_anomaly=np.radians(true_anomaly),
-        planet=planet
+        planet=planet,
     )
 
 
 def vector_to_classical_elements(
-    r_bn_n: np.ndarray,
-    v_bn_n: np.ndarray,
-    planet: str = "earth"
+    r_bn_n: np.ndarray, v_bn_n: np.ndarray, planet: str = "earth"
 ) -> tuple:
     """
     Convert state vectors to classical orbital elements. This function
@@ -369,12 +380,16 @@ def vector_to_classical_elements(
     node: float = np.linalg.norm(NODE)
 
     # the eccentricity vector
-    ECC: np.ndarray = (r_bn_n * (v_mag_sqrd - mu / r_mag) - v_bn_n * r_mag_dot_v_mag) / mu
+    ECC: np.ndarray = (
+        r_bn_n * (v_mag_sqrd - mu / r_mag) - v_bn_n * r_mag_dot_v_mag
+    ) / mu
     eccentricity: float = np.linalg.norm(ECC)  # eccentricity
 
     # find the type of orbit and adjust the orbital element set accordingly
     if eccentricity == 1:
-        raise ArithmeticError("The orbit is parabolic. Consider using a different function.")
+        raise ArithmeticError(
+            "The orbit is parabolic. Consider using a different function."
+        )
     # calculate the semi-major axis
     energy: float = v_mag_sqrd / 2 - mu / r_mag
     semi_major_axis: float = -mu / (2 * energy)
@@ -387,9 +402,11 @@ def vector_to_classical_elements(
                 semi_major_axis,
                 eccentricity,
                 inclination,
-                utils.acos_quadrant_check(r_bn_n[0], r_mag, r_bn_n[1]),  # true longitude
+                utils.acos_quadrant_check(
+                    r_bn_n[0], r_mag, r_bn_n[1]
+                ),  # true longitude
                 0,
-                0
+                0,
             )
         else:
             # equatorial elliptical orbit
@@ -398,8 +415,12 @@ def vector_to_classical_elements(
                 eccentricity,
                 inclination,
                 0,
-                utils.acos_quadrant_check(ECC[0], eccentricity, ECC[1]),  # longitude of periapsis
-                utils.acos_quadrant_check(np.dot(ECC, r_bn_n), eccentricity * r_mag, r_mag_dot_v_mag)  # true anomaly
+                utils.acos_quadrant_check(
+                    ECC[0], eccentricity, ECC[1]
+                ),  # longitude of periapsis
+                utils.acos_quadrant_check(
+                    np.dot(ECC, r_bn_n), eccentricity * r_mag, r_mag_dot_v_mag
+                ),  # true anomaly
             )
     elif np.fabs(eccentricity) <= 1e-10:
         # circular inclined orbit
@@ -408,8 +429,10 @@ def vector_to_classical_elements(
             eccentricity,
             inclination,
             utils.acos_quadrant_check(NODE[0], node, NODE[1]),  # RAAN
-            utils.acos_quadrant_check(np.dot(NODE, r_bn_n), node * r_mag, r_bn_n[2]),  # true argument of latitude
-            0
+            utils.acos_quadrant_check(
+                np.dot(NODE, r_bn_n), node * r_mag, r_bn_n[2]
+            ),  # true argument of latitude
+            0,
         )
     else:
         # classical elliptical inclined orbit
@@ -418,14 +441,18 @@ def vector_to_classical_elements(
             eccentricity,
             inclination,
             utils.acos_quadrant_check(NODE[0], node, NODE[1]),  # RAAN
-            utils.acos_quadrant_check(np.dot(NODE, ECC), node * eccentricity, ECC[2]),  # argument of periapsis
-            utils.acos_quadrant_check(np.dot(ECC, r_bn_n), eccentricity * r_mag, r_mag_dot_v_mag)  # true anomaly
+            utils.acos_quadrant_check(
+                np.dot(NODE, ECC), node * eccentricity, ECC[2]
+            ),  # argument of periapsis
+            utils.acos_quadrant_check(
+                np.dot(ECC, r_bn_n), eccentricity * r_mag, r_mag_dot_v_mag
+            ),  # true anomaly
         )
 
 
-def pcpf_to_geodetic_lla (position: np.ndarray, planet="Earth") -> np.ndarray:
+def pcpf_to_geodetic_lla(position: np.ndarray, planet="Earth") -> np.ndarray:
     """
-    Converts the Planet-Centred, Planet-Fixed parameters to Latitude, 
+    Converts the Planet-Centred, Planet-Fixed parameters to Latitude,
     Longitude, and Altitude using NumPy.
 
     :param position:    The current ECPF position as a NumPy array or list (X, Y, Z)
@@ -444,16 +471,20 @@ def pcpf_to_geodetic_lla (position: np.ndarray, planet="Earth") -> np.ndarray:
     # make sure that the position is of type float
     position = position.astype(dtype=np.float64)
     # WGS Parameters
-    a: float = get_planet_property(planet=planet, property="REQ")  # Equatorial radius of the planet
-    f: float = get_planet_property(planet=planet, property="FLATTENING")  # Flattening factor of the planet
-    e: float = np.sqrt(2 * f - f ** 2)
+    a: float = get_planet_property(
+        planet=planet, property="REQ"
+    )  # Equatorial radius of the planet
+    f: float = get_planet_property(
+        planet=planet, property="FLATTENING"
+    )  # Flattening factor of the planet
+    e: float = np.sqrt(2 * f - f**2)
 
     longitude: float = np.arctan2(position[1], position[0])
     P: float = np.sqrt(position[0] ** 2 + position[1] ** 2)
 
     # Initial calculations for latitude and altitude
     altitude: float = 0
-    latitude: float = np.arctan2(position[2], P * (1 - e ** 2))
+    latitude: float = np.arctan2(position[2], P * (1 - e**2))
     N: float = a / np.sqrt(1 - (e * np.sin(latitude)) ** 2)
     delta_h: float = 1000000
     prevH: float = 0
@@ -462,7 +493,7 @@ def pcpf_to_geodetic_lla (position: np.ndarray, planet="Earth") -> np.ndarray:
     # Iterative calculations for latitude and altitude
     while delta_h > 0.01 and iterations < 10:
         prevH = altitude
-        latitude = np.arctan2(position[2], P * (1 - e ** 2 * (N / (N + altitude))))
+        latitude = np.arctan2(position[2], P * (1 - e**2 * (N / (N + altitude))))
         if np.isnan(latitude):
             raise ValueError("Latitude is NaN")
         N = a / np.sqrt(1 - (e * np.sin(latitude)) ** 2)
@@ -477,9 +508,9 @@ def pcpf_to_geodetic_lla (position: np.ndarray, planet="Earth") -> np.ndarray:
     return np.array([latitude, longitude, altitude], dtype=np.float64)
 
 
-def pcpf_to_geodetic_lla_deg (position: np.ndarray, planet="Earth") -> np.ndarray:
+def pcpf_to_geodetic_lla_deg(position: np.ndarray, planet="Earth") -> np.ndarray:
     """
-    Converts the Planet-Centred, Planet-Fixed parameters to Latitude, 
+    Converts the Planet-Centred, Planet-Fixed parameters to Latitude,
     Longitude, and Altitude using NumPy.
 
     :param position:    The current ECPF position as a NumPy array or list (X, Y, Z)
@@ -494,7 +525,7 @@ def pcpf_to_geodetic_lla_deg (position: np.ndarray, planet="Earth") -> np.ndarra
     return np.array([np.degrees(lla[0]), np.degrees(lla[1]), lla[2]], dtype=np.float64)
 
 
-def geodetic_lla_to_pcpf (lla: np.ndarray, planet="Earth") -> np.ndarray:
+def geodetic_lla_to_pcpf(lla: np.ndarray, planet="Earth") -> np.ndarray:
     """
     Converts from Latitude/Longitude/Altitude (LLA) coordinates to Planet-Centered,
     Planet-Fixed (PCPF) coordinates given a planet radius.
@@ -514,7 +545,9 @@ def geodetic_lla_to_pcpf (lla: np.ndarray, planet="Earth") -> np.ndarray:
     lon: float = lla[1]  # Longitude in radians
     alt: float = lla[2]  # Altitude in meters
     planet_radius: float = get_planet_property(planet=planet, property="REQ")
-    f: float = get_planet_property(planet=planet, property="FLATTENING")  # Flattening factor
+    f: float = get_planet_property(
+        planet=planet, property="FLATTENING"
+    )  # Flattening factor
     e_sq: float = f * (2 - f)  # Square of eccentricity
 
     # Calculate the radius of curvature in the prime vertical
@@ -545,10 +578,14 @@ def geodetic_lla_to_pcpf_deg(lla: np.ndarray, planet="Earth") -> np.ndarray:
     # Convert latitude and longitude from degrees to radians
     lat: float = np.radians(lla[0])  # Latitude in radians
     lon: float = np.radians(lla[1])  # Longitude in radians
-    return geodetic_lla_to_pcpf(np.array([lat, lon, lla[2]], dtype=np.float64), planet=planet)
+    return geodetic_lla_to_pcpf(
+        np.array([lat, lon, lla[2]], dtype=np.float64), planet=planet
+    )
 
 
-def t_pcpf_to_sez_using_geodetic_lla_deg(latitude: float, longitude: float) -> np.ndarray:
+def t_pcpf_to_sez_using_geodetic_lla_deg(
+    latitude: float, longitude: float
+) -> np.ndarray:
     """
     Convert geodetic coordinates (latitude and longitude) to the SEZ (South, East, Zenith) rotation matrix.
 
@@ -562,15 +599,13 @@ def t_pcpf_to_sez_using_geodetic_lla_deg(latitude: float, longitude: float) -> n
     # Convert degrees to radians
     t_pcpf_to_enu = t_pcpf_to_enu_using_geodetic_lla_deg(latitude, longitude)
     # Convert ENU to SEZ
-    t_enu_to_sez = np.array([
-        [0, -1, 0],
-        [1, 0, 0],
-        [0, 0, 1]
-    ])
+    t_enu_to_sez = np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
     return t_enu_to_sez @ t_pcpf_to_enu
 
 
-def t_pcpf_to_enu_using_geodetic_lla_deg(latitude: float, longitude: float) -> np.ndarray:
+def t_pcpf_to_enu_using_geodetic_lla_deg(
+    latitude: float, longitude: float
+) -> np.ndarray:
     """
     Convert geodetic coordinates (latitude and longitude) to the ENU (East, North, Up) rotation matrix.
 
@@ -585,17 +620,29 @@ def t_pcpf_to_enu_using_geodetic_lla_deg(latitude: float, longitude: float) -> n
     lat_rad = np.deg2rad(latitude)
     lon_rad = np.deg2rad(longitude)
     # Create the transformation matrix for pcpf into enu
-    t_pcpf_to_enu = np.array([
-        [-np.sin(lon_rad), np.cos(lon_rad), 0],
-        [-np.cos(lon_rad) * np.sin(lat_rad), -np.sin(lon_rad) * np.sin(lat_rad), np.cos(lat_rad)],
-        [np.cos(lon_rad) * np.cos(lat_rad), np.sin(lon_rad) * np.cos(lat_rad), np.sin(lat_rad)]
-    ])
+    t_pcpf_to_enu = np.array(
+        [
+            [-np.sin(lon_rad), np.cos(lon_rad), 0],
+            [
+                -np.cos(lon_rad) * np.sin(lat_rad),
+                -np.sin(lon_rad) * np.sin(lat_rad),
+                np.cos(lat_rad),
+            ],
+            [
+                np.cos(lon_rad) * np.cos(lat_rad),
+                np.sin(lon_rad) * np.cos(lat_rad),
+                np.sin(lat_rad),
+            ],
+        ]
+    )
     return t_pcpf_to_enu
 
 
-def azimuth_elevation_to_enu(azimuth: np.ndarray | float,
-                             elevation: np.ndarray | float,
-                             slant_range: np.ndarray | float) -> np.ndarray:
+def azimuth_elevation_to_enu(
+    azimuth: np.ndarray | float,
+    elevation: np.ndarray | float,
+    slant_range: np.ndarray | float,
+) -> np.ndarray:
     """
     Convert azimuth/elevation angles and range into a local ENU (East, North, Up) vector.
     The function is vectorized, so scalar or array inputs are both supported.
@@ -631,7 +678,7 @@ def azimuth_elevation_to_enu(azimuth: np.ndarray | float,
     # preserving scalar inputs as 0D arrays (NumPy will broadcast).
     az = np.asarray(azimuth, dtype=float)
     el = np.asarray(elevation, dtype=float)
-    r  = np.asarray(slant_range, dtype=float)
+    r = np.asarray(slant_range, dtype=float)
 
     # Compute horizontal distance (the ground projection) = r * cos(el)
     # This is the distance in the local horizontal plane from the sensor to target.
@@ -640,9 +687,9 @@ def azimuth_elevation_to_enu(azimuth: np.ndarray | float,
     # "East" component = horizontal_dist * sin(az)
     # "North" component = horizontal_dist * cos(az)
     # "Up" component = r * sin(el)
-    east  = horizontal_dist * np.sin(az)
+    east = horizontal_dist * np.sin(az)
     north = horizontal_dist * np.cos(az)
-    up    = r * np.sin(el)
+    up = r * np.sin(el)
 
     # Stack results along the last axis => shape (..., 3)
     enu = np.stack([east, north, up], axis=-1)
@@ -674,8 +721,11 @@ def enu_to_azimuth_elevation(enu_vectors: np.ndarray) -> Tuple[np.ndarray, np.nd
     return azimuth, elevation
 
 
-def pcpf_to_azimuth_elevation(latitude_deg: float | np.ndarray, longitude_deg: float | np.ndarray,
-                              pcpf_vectors: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def pcpf_to_azimuth_elevation(
+    latitude_deg: float | np.ndarray,
+    longitude_deg: float | np.ndarray,
+    pcpf_vectors: np.ndarray,
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Convert a PCPF vector to azimuth and elevation angles.
 
@@ -693,7 +743,10 @@ def pcpf_to_azimuth_elevation(latitude_deg: float | np.ndarray, longitude_deg: f
     if isinstance(longitude_deg, float):
         longitude_deg = np.array([longitude_deg])
     # Convert PCPF to ENU
-    t_pcpf_to_enus = [t_pcpf_to_enu_using_geodetic_lla_deg(lat, lon) for lat, lon in zip(latitude_deg, longitude_deg)]
+    t_pcpf_to_enus = [
+        t_pcpf_to_enu_using_geodetic_lla_deg(lat, lon)
+        for lat, lon in zip(latitude_deg, longitude_deg)
+    ]
     t_pcpf_to_enus = np.array(t_pcpf_to_enus)
     # Make sure that the dimensions of the input vectors are compatible with the einsum operation
     if pcpf_vectors.ndim == 1:
@@ -705,7 +758,9 @@ def pcpf_to_azimuth_elevation(latitude_deg: float | np.ndarray, longitude_deg: f
     return enu_to_azimuth_elevation(enu_vectors)
 
 
-def calculate_orbital_velocity(r_bn_n_mag: float, semi_major_axis: float, gm: float = constants.EARTH_MU) -> float:
+def calculate_orbital_velocity(
+    r_bn_n_mag: float, semi_major_axis: float, gm: float = constants.EARTH_MU
+) -> float:
     """
     Calculate the magnitude of the orbital velocity for a spacecraft in any orbit type.
 
@@ -731,31 +786,41 @@ def calculate_orbital_velocity(r_bn_n_mag: float, semi_major_axis: float, gm: fl
         7.546049108166282
     """
     if r_bn_n_mag <= 0:
-        raise ValueError(f"The input distance from Earth's center (r: {r_bn_n_mag} km) is not valid.")
+        raise ValueError(
+            f"The input distance from Earth's center (r: {r_bn_n_mag} km) is not valid."
+        )
     if semi_major_axis < 0:
-        raise ValueError(f"The input semi-major axis (semi_major_axis: {semi_major_axis} km) is not valid.")
+        raise ValueError(
+            f"The input semi-major axis (semi_major_axis: {semi_major_axis} km) is not valid."
+        )
     # sanity check the input parameters
     radicand = 2 * gm * (1 / r_bn_n_mag - 1 / (2 * semi_major_axis))
     if radicand < 0:
-        raise ValueError(f"The radicand ({radicand}) is not greater than zero, leading to a singularity.")
+        raise ValueError(
+            f"The radicand ({radicand}) is not greater than zero, leading to a singularity."
+        )
     # calculate the orbital velocity
     return np.sqrt(radicand)
 
 
-def calculate_circular_orbit_velocity(semi_major_axis: float, gm=constants.EARTH_MU) -> float:
+def calculate_circular_orbit_velocity(
+    semi_major_axis: float, gm=constants.EARTH_MU
+) -> float:
     """
-    Calculates the magnitude of the orbital velocity for a spacecraft in 
+    Calculates the magnitude of the orbital velocity for a spacecraft in
     a circular orbit.
 
     :param semi_major_axis: The semi-major axis of the spacecraft's orbit. It must be a non-negative value - m
     :type semi_major_axis:  float
     :param gm:  The gravitational parameter, defaulting to Earth's gravitational parameter if not provided - m^3/s^2.
     :type gm:   float
-    
+
     :return:    The magnitude of the spacecraft's orbital velocity resulting in a circular orbit - m/s.
     :rtype:     float
     """
-    return calculate_orbital_velocity(r_bn_n_mag=semi_major_axis, semi_major_axis=semi_major_axis, gm=gm)
+    return calculate_orbital_velocity(
+        r_bn_n_mag=semi_major_axis, semi_major_axis=semi_major_axis, gm=gm
+    )
 
 
 def mean_to_eccentric_anomaly(mean_anomaly: float, eccentricity: float) -> float:
@@ -777,11 +842,17 @@ def mean_to_eccentric_anomaly(mean_anomaly: float, eccentricity: float) -> float
         # return this to avoid a singularity in ratio
         return mean_anomaly
     # define the initial guess for the eccentric anomaly
-    eccentric_anomaly = mean_anomaly + eccentricity / 2 if mean_anomaly < np.pi else mean_anomaly - eccentricity / 2
+    eccentric_anomaly = (
+        mean_anomaly + eccentricity / 2
+        if mean_anomaly < np.pi
+        else mean_anomaly - eccentricity / 2
+    )
     # calculate the eccentric anomaly
     ratio = 1.0
     while np.fabs(ratio) > 1e-10 / 100.0:
-        ratio = (eccentric_anomaly - eccentricity * np.sin(eccentric_anomaly) - mean_anomaly) / (1 - eccentricity * np.cos(eccentric_anomaly))
+        ratio = (
+            eccentric_anomaly - eccentricity * np.sin(eccentric_anomaly) - mean_anomaly
+        ) / (1 - eccentricity * np.cos(eccentric_anomaly))
         eccentric_anomaly = eccentric_anomaly - ratio
     return utils.normalize_angle(eccentric_anomaly)
 
@@ -805,7 +876,7 @@ def eccentric_to_true_anomaly(eccentric_anomaly: float, eccentricity: float) -> 
     return utils.acos_quadrant_check(
         np.cos(eccentric_anomaly) - eccentricity,
         1 - eccentricity * np.cos(eccentric_anomaly),
-        test
+        test,
     )
 
 
@@ -822,7 +893,7 @@ def true_to_eccentric_anomaly(true_anomaly: float, eccentricity: float) -> float
     return utils.normalize_angle(
         np.arctan2(
             np.sin(true_anomaly) * np.sqrt(1 - eccentricity**2),
-            eccentricity + np.cos(true_anomaly)
+            eccentricity + np.cos(true_anomaly),
         )
     )
 
@@ -838,7 +909,9 @@ def eccentric_to_mean_anomaly(eccentric_anomaly: float, eccentricity: float) -> 
     :return: [rad] Mean elliptic anomaly
     :rtype: float
     """
-    return utils.normalize_angle(eccentric_anomaly - eccentricity * np.sin(eccentric_anomaly))
+    return utils.normalize_angle(
+        eccentric_anomaly - eccentricity * np.sin(eccentric_anomaly)
+    )
 
 
 def true_to_mean_anomaly(true_anomaly: float, eccentricity: float) -> float:
@@ -852,7 +925,9 @@ def true_to_mean_anomaly(true_anomaly: float, eccentricity: float) -> float:
     :return:                [rad] Mean elliptic anomaly
     :rtype:                 float
     """
-    return eccentric_to_mean_anomaly(true_to_eccentric_anomaly(true_anomaly, eccentricity), eccentricity)
+    return eccentric_to_mean_anomaly(
+        true_to_eccentric_anomaly(true_anomaly, eccentricity), eccentricity
+    )
 
 
 def mean_to_true_anomaly(mean_anomaly: float, eccentricity: float) -> float:
@@ -867,11 +942,7 @@ def mean_to_true_anomaly(mean_anomaly: float, eccentricity: float) -> float:
     :rtype:                 float
     """
     return eccentric_to_true_anomaly(
-        mean_to_eccentric_anomaly(
-            mean_anomaly,
-            eccentricity
-        ),
-        eccentricity
+        mean_to_eccentric_anomaly(mean_anomaly, eccentricity), eccentricity
     )
 
 
@@ -884,7 +955,7 @@ def mean_to_osculating_elements(
     right_ascension: float,
     argument_of_periapsis: float,
     true_anomaly: float,
-    mean_to_osculating: bool
+    mean_to_osculating: bool,
 ) -> Tuple[float, float, float, float, float, float]:
     """
     First-order J2 Mapping Between Mean and Osculating Orbital Elements
@@ -936,76 +1007,142 @@ def mean_to_osculating_elements(
     M = eccentric_to_mean_anomaly(E, e)
     # calculate the gamma2 parameter
     gamma2 = sgn * j2 / 2 * (req / a) ** 2
-    eta = np.sqrt(1 - e ** 2)
-    eta2 = eta ** 2
-    eta3 = eta ** 3
-    eta4 = eta ** 4
-    eta6 = eta ** 6
+    eta = np.sqrt(1 - e**2)
+    eta2 = eta**2
+    eta3 = eta**3
+    eta4 = eta**4
+    eta6 = eta**6
     gamma2p = gamma2 / eta4
     a_r = (1 + e * np.cos(f)) / eta2
     cos_i = np.cos(i)
-    cos_i2 = cos_i ** 2
-    cos_i4 = cos_i ** 4
-    cos_i6 = cos_i ** 6
+    cos_i2 = cos_i**2
+    cos_i4 = cos_i**4
+    cos_i6 = cos_i**6
     cos_f = np.cos(f)
     # calculate the osculating semi-major axis
     ap = a + a * gamma2 * (
-        (3 * cos_i2 - 1) * (a_r ** 3 - 1 / eta3) +
-        3 * (1 - cos_i2) * (a_r ** 3) * np.cos(2 * omega + 2 * f)
+        (3 * cos_i2 - 1) * (a_r**3 - 1 / eta3)
+        + 3 * (1 - cos_i2) * (a_r**3) * np.cos(2 * omega + 2 * f)
     )
     # calculate the osculating eccentricity
-    de1 = gamma2p / 8 * e * eta2 * (
-        1 - 11 * cos_i2 - 40 * cos_i2 ** 2 / (1 - 5 * cos_i2)
-    ) * np.cos(2 * omega)
+    de1 = (
+        gamma2p
+        / 8
+        * e
+        * eta2
+        * (1 - 11 * cos_i2 - 40 * cos_i2**2 / (1 - 5 * cos_i2))
+        * np.cos(2 * omega)
+    )
     de = de1 + eta2 / 2 * (
-        gamma2 * ((3 * cos_i2 - 1) / eta6
-                  * (e * eta + e / (1 + eta) + 3 * cos_f + 3 * e * cos_f ** 2 + e ** 2
-                     * cos_f ** 3) + 3 * (1 - cos_i2) / eta6
-                  * (e + 3 * cos_f + 3 * e * cos_f ** 2 + e ** 2 * cos_f ** 3) *
-                  np.cos(2 * omega + 2 * f))
-        - gamma2p * (1 - cos_i2) *
-        (3 * np.cos(2 * omega + f) + np.cos(2 * omega + 3 * f))
+        gamma2
+        * (
+            (3 * cos_i2 - 1)
+            / eta6
+            * (e * eta + e / (1 + eta) + 3 * cos_f + 3 * e * cos_f**2 + e**2 * cos_f**3)
+            + 3
+            * (1 - cos_i2)
+            / eta6
+            * (e + 3 * cos_f + 3 * e * cos_f**2 + e**2 * cos_f**3)
+            * np.cos(2 * omega + 2 * f)
+        )
+        - gamma2p
+        * (1 - cos_i2)
+        * (3 * np.cos(2 * omega + f) + np.cos(2 * omega + 3 * f))
     )
     # calculate the osculating inclination
     di = -e * de1 / eta2 / np.tan(i) + gamma2p / 2 * cos_i * np.sqrt(1 - cos_i2) * (
-        3 * np.cos(2 * omega + 2 * f) + 3 * e * np.cos(2 * omega + f) +
-        e * np.cos(2 * omega + 3 * f))
+        3 * np.cos(2 * omega + 2 * f)
+        + 3 * e * np.cos(2 * omega + f)
+        + e * np.cos(2 * omega + 3 * f)
+    )
     # calculate the osculating mean anomaly
-    m_pop_op = M + omega + Omega + gamma2p / 8.0 * eta3 * (1 - 11 * cos_i2
-                                                           - 40 * cos_i4 / (1 - 5 * cos_i2)) * np.sin(2 * omega) \
-              - gamma2p / 16.0 * (2 + e ** 2 - 11 * (2 + 3 * e ** 2) * cos_i2 - 40 * (2 + 5 * e ** 2)
-                                  * cos_i4 / (1 - 5 * cos_i2) - 400 * e ** 2 * cos_i6
-                                  / ((1 - 5 * cos_i2) * (1 - 5 * cos_i2))) * np.sin(2 * omega) \
-              + gamma2p / 4.0 * (-6 * (1 - 5 * cos_i2) * (f - M + e * np.sin(f)) + (3 - 5 * cos_i2)
-                                 * (3 * np.sin(2 * omega + 2 * f) + 3 * e * np.sin(2 * omega + f) + e * np.sin(2 * omega + 3 * f))) \
-              - gamma2p / 8 * e ** 2 * cos_i * (11 + 80 * cos_i2 / (1 - 5 * cos_i2)
-                                                + 200 * cos_i4 / ((1 - 5 * cos_i2) * (1 - 5 * cos_i2))) * np.sin(2 * omega) \
-              - gamma2p / 2.0 * cos_i * (6 * (f - M + e * np.sin(f)) - 3 * np.sin(2 * omega + 2 * f)
-                                         - 3 * e * np.sin(2 * omega + f) - e * np.sin(2 * omega + 3 * f))
+    m_pop_op = (
+        M
+        + omega
+        + Omega
+        + gamma2p
+        / 8.0
+        * eta3
+        * (1 - 11 * cos_i2 - 40 * cos_i4 / (1 - 5 * cos_i2))
+        * np.sin(2 * omega)
+        - gamma2p
+        / 16.0
+        * (
+            2
+            + e**2
+            - 11 * (2 + 3 * e**2) * cos_i2
+            - 40 * (2 + 5 * e**2) * cos_i4 / (1 - 5 * cos_i2)
+            - 400 * e**2 * cos_i6 / ((1 - 5 * cos_i2) * (1 - 5 * cos_i2))
+        )
+        * np.sin(2 * omega)
+        + gamma2p
+        / 4.0
+        * (
+            -6 * (1 - 5 * cos_i2) * (f - M + e * np.sin(f))
+            + (3 - 5 * cos_i2)
+            * (
+                3 * np.sin(2 * omega + 2 * f)
+                + 3 * e * np.sin(2 * omega + f)
+                + e * np.sin(2 * omega + 3 * f)
+            )
+        )
+        - gamma2p
+        / 8
+        * e**2
+        * cos_i
+        * (
+            11
+            + 80 * cos_i2 / (1 - 5 * cos_i2)
+            + 200 * cos_i4 / ((1 - 5 * cos_i2) * (1 - 5 * cos_i2))
+        )
+        * np.sin(2 * omega)
+        - gamma2p
+        / 2.0
+        * cos_i
+        * (
+            6 * (f - M + e * np.sin(f))
+            - 3 * np.sin(2 * omega + 2 * f)
+            - 3 * e * np.sin(2 * omega + f)
+            - e * np.sin(2 * omega + 3 * f)
+        )
+    )
     # calculate the osculating eccentricity mean anomaly
-    ed_m = gamma2p / 8.0 * e * eta3 * (1 - 11 * cos_i2 - 40 * cos_i4
-                                        / (1 - 5 * cos_i2)) * np.sin(2 * omega) \
-           - gamma2p / 4.0 * eta3 * (2 * (3 * cos_i2 - 1)
-                                     * ((a_r * eta) * (a_r * eta) + a_r + 1) * np.sin(f) +
-                                     3 * (1 - cos_i2) * ((-(a_r * eta) * (a_r * eta) - a_r + 1)
-                                                         * np.sin(2 * omega + f) + ((a_r * eta) * (a_r * eta) + a_r + 1 / 3.0) * np.sin(2 * omega + 3 * f)))
+    ed_m = gamma2p / 8.0 * e * eta3 * (
+        1 - 11 * cos_i2 - 40 * cos_i4 / (1 - 5 * cos_i2)
+    ) * np.sin(2 * omega) - gamma2p / 4.0 * eta3 * (
+        2 * (3 * cos_i2 - 1) * ((a_r * eta) * (a_r * eta) + a_r + 1) * np.sin(f)
+        + 3
+        * (1 - cos_i2)
+        * (
+            (-(a_r * eta) * (a_r * eta) - a_r + 1) * np.sin(2 * omega + f)
+            + ((a_r * eta) * (a_r * eta) + a_r + 1 / 3.0) * np.sin(2 * omega + 3 * f)
+        )
+    )
     # calculate the osculating right ascension of the ascending node
-    d_omega = -gamma2p / 8.0 * e ** 2 * cos_i * (11 + 80 * cos_i2 / (1 - 5 * cos_i2)
-                                                 + 200 * cos_i4 / ((1 - 5 * cos_i2) * (1 - 5 * cos_i2))) * np.sin(2 * omega) \
-              - gamma2p / 2.0 * cos_i * (6 * (f - M + e * np.sin(f)) - 3 * np.sin(2 * omega + 2 * f)
-                                         - 3 * e * np.sin(2 * omega + f) - e * np.sin(2 * omega + 3 * f))
+    d_omega = -gamma2p / 8.0 * e**2 * cos_i * (
+        11
+        + 80 * cos_i2 / (1 - 5 * cos_i2)
+        + 200 * cos_i4 / ((1 - 5 * cos_i2) * (1 - 5 * cos_i2))
+    ) * np.sin(2 * omega) - gamma2p / 2.0 * cos_i * (
+        6 * (f - M + e * np.sin(f))
+        - 3 * np.sin(2 * omega + 2 * f)
+        - 3 * e * np.sin(2 * omega + f)
+        - e * np.sin(2 * omega + 3 * f)
+    )
     # calculate the osculating mean anomaly
     d1 = (e + de) * np.sin(M) + ed_m * np.cos(M)
     d2 = (e + de) * np.cos(M) - ed_m * np.sin(M)
     m_p = np.arctan2(d1, d2)
-    e_p = np.sqrt(d1 ** 2 + d2 ** 2)
+    e_p = np.sqrt(d1**2 + d2**2)
     # calculate the osculating right ascension of the ascending node
-    d3 = (np.sin(i / 2.0) + np.cos(i / 2.0) * di / 2.0) * np.sin(Omega) + \
-         np.sin(i / 2.0) * d_omega * np.cos(Omega)
-    d4 = (np.sin(i / 2.0) + np.cos(i / 2.0) * di / 2.0) * np.cos(Omega) - \
-            np.sin(i / 2.0) * d_omega * np.sin(Omega)
+    d3 = (np.sin(i / 2.0) + np.cos(i / 2.0) * di / 2.0) * np.sin(Omega) + np.sin(
+        i / 2.0
+    ) * d_omega * np.cos(Omega)
+    d4 = (np.sin(i / 2.0) + np.cos(i / 2.0) * di / 2.0) * np.cos(Omega) - np.sin(
+        i / 2.0
+    ) * d_omega * np.sin(Omega)
     Omega_p = np.arctan2(d3, d4)
-    d_34 = np.sqrt(d3 ** 2 + d4 ** 2)
+    d_34 = np.sqrt(d3**2 + d4**2)
     d_34 = -1 if d_34 < -1 else d_34
     d_34 = 1 if d_34 > 1 else d_34
     i_p = 2 * np.arcsin(d_34)
@@ -1016,9 +1153,7 @@ def mean_to_osculating_elements(
 
 
 def vector_to_classical_elements_mean(
-        r_bn_n: np.ndarray,
-        v_bn_n: np.ndarray,
-        planet: str = "earth"
+    r_bn_n: np.ndarray, v_bn_n: np.ndarray, planet: str = "earth"
 ) -> Tuple[float, float, float, float, float, float]:
     """
     Converts the position and velocity vectors into mean classical orbital elements.
@@ -1043,32 +1178,32 @@ def vector_to_classical_elements_mean(
     """
     # calculate the osculating orbital elements
     sma_osc, ecc_osc, inc_osc, raan_osc, aop_osc, ta_osc = vector_to_classical_elements(
-        r_bn_n=r_bn_n,
-        v_bn_n=v_bn_n,
-        planet=planet
+        r_bn_n=r_bn_n, v_bn_n=v_bn_n, planet=planet
     )
     # convert the osculating orbital elements to mean orbital elements
-    sma_mean, ecc_mean, inc_mean, raan_mean, aop_mean, ta_mean = mean_to_osculating_elements(
-        req=get_planet_property(planet=planet, property="REQ"),
-        j2=get_planet_property(planet=planet, property="J2"),
-        semi_major_axis=sma_osc,
-        eccentricity=ecc_osc,
-        inclination=inc_osc,
-        right_ascension=raan_osc,
-        argument_of_periapsis=aop_osc,
-        true_anomaly=ta_osc,
-        mean_to_osculating=False
+    sma_mean, ecc_mean, inc_mean, raan_mean, aop_mean, ta_mean = (
+        mean_to_osculating_elements(
+            req=get_planet_property(planet=planet, property="REQ"),
+            j2=get_planet_property(planet=planet, property="J2"),
+            semi_major_axis=sma_osc,
+            eccentricity=ecc_osc,
+            inclination=inc_osc,
+            right_ascension=raan_osc,
+            argument_of_periapsis=aop_osc,
+            true_anomaly=ta_osc,
+            mean_to_osculating=False,
+        )
     )
     return sma_mean, ecc_mean, inc_mean, raan_mean, aop_mean, ta_mean
 
 
 def classical_to_non_singular_elements(
-        semi_major_axis: float,
-        eccentricity: float,
-        inclination: float,
-        right_ascension: float,
-        argument_of_periapsis: float,
-        true_anomaly: float
+    semi_major_axis: float,
+    eccentricity: float,
+    inclination: float,
+    right_ascension: float,
+    argument_of_periapsis: float,
+    true_anomaly: float,
 ) -> Tuple[float, float, float, float, float, float]:
     """
     convert classical orbital elements to non-singular orbital elements as defined in the PhD Thesis:
@@ -1107,26 +1242,24 @@ def classical_to_non_singular_elements(
         inclination,
         right_ascension,
         utils.normalize_angle(
-            argument_of_periapsis + true_to_mean_anomaly(
-                true_anomaly,
-                eccentricity)
-        )
+            argument_of_periapsis + true_to_mean_anomaly(true_anomaly, eccentricity)
+        ),
     )
 
 
 def non_singular_to_relative_elements(
-        semi_major_axis_leader: float,
-        e_x_leader: float,
-        e_y_leader: float,
-        inclination_leader: float,
-        right_ascension_leader: float,
-        mean_argument_of_latitude_leader: float,
-        semi_major_axis_follower: float,
-        e_x_follower: float,
-        e_y_follower: float,
-        inclination_follower: float,
-        right_ascension_follower: float,
-        mean_argument_of_latitude_follower: float,
+    semi_major_axis_leader: float,
+    e_x_leader: float,
+    e_y_leader: float,
+    inclination_leader: float,
+    right_ascension_leader: float,
+    mean_argument_of_latitude_leader: float,
+    semi_major_axis_follower: float,
+    e_x_follower: float,
+    e_y_follower: float,
+    inclination_follower: float,
+    right_ascension_follower: float,
+    mean_argument_of_latitude_follower: float,
 ) -> Tuple[float, float, float, float, float, float]:
     """
     Convert non-singular orbital elements to relative orbital elements as defined in the PhD Thesis:
@@ -1169,31 +1302,38 @@ def non_singular_to_relative_elements(
     :rtype: tuple
     """
     da = semi_major_axis_follower - semi_major_axis_leader  # [m]
-    d_raan = utils.shortest_angular_difference(right_ascension_follower, right_ascension_leader)  # [rad]
+    d_raan = utils.shortest_angular_difference(
+        right_ascension_follower, right_ascension_leader
+    )  # [rad]
     dex = (e_x_follower - e_x_leader) * semi_major_axis_leader  # [m]
-    dix = utils.shortest_angular_difference(inclination_follower, inclination_leader) * semi_major_axis_leader  # [m]
+    dix = (
+        utils.shortest_angular_difference(inclination_follower, inclination_leader)
+        * semi_major_axis_leader
+    )  # [m]
     diy = d_raan * np.sin(inclination_leader) * semi_major_axis_leader  # [m]
     dey = (e_y_follower - e_y_leader) * semi_major_axis_leader  # [m]
-    daoml = (utils.shortest_angular_difference(
-        mean_argument_of_latitude_follower,
-        mean_argument_of_latitude_leader
-    ) + d_raan * np.cos(inclination_leader)) * semi_major_axis_leader  # [m]
+    daoml = (
+        utils.shortest_angular_difference(
+            mean_argument_of_latitude_follower, mean_argument_of_latitude_leader
+        )
+        + d_raan * np.cos(inclination_leader)
+    ) * semi_major_axis_leader  # [m]
     return da, dex, dix, diy, dey, daoml
 
 
 def classical_to_relative_elements(
-        semi_major_axis_leader: float,
-        eccentricity_leader: float,
-        inclination_leader: float,
-        right_ascension_leader: float,
-        argument_of_periapsis_leader: float,
-        true_anomaly_leader: float,
-        semi_major_axis_follower: float,
-        eccentricity_follower: float,
-        inclination_follower: float,
-        right_ascension_follower: float,
-        argument_of_periapsis_follower: float,
-        true_anomaly_follower: float
+    semi_major_axis_leader: float,
+    eccentricity_leader: float,
+    inclination_leader: float,
+    right_ascension_leader: float,
+    argument_of_periapsis_leader: float,
+    true_anomaly_leader: float,
+    semi_major_axis_follower: float,
+    eccentricity_follower: float,
+    inclination_follower: float,
+    right_ascension_follower: float,
+    argument_of_periapsis_follower: float,
+    true_anomaly_follower: float,
 ) -> Tuple[float, float, float, float, float, float]:
     """
     Convert classical orbital elements to relative orbital elements as defined in the PhD Thesis:
@@ -1234,7 +1374,7 @@ def classical_to_relative_elements(
                     daoml: change in mean argument of latitude [m]
                 )
     :rtype: tuple
-"""
+    """
     # convert the classical orbital elements to non-singular orbital elements
     (
         semi_major_axis_leader,
@@ -1242,14 +1382,14 @@ def classical_to_relative_elements(
         e_y_leader,
         inclination_leader,
         right_ascension_leader,
-        mean_argument_of_latitude_leader
+        mean_argument_of_latitude_leader,
     ) = classical_to_non_singular_elements(
         semi_major_axis_leader,
         eccentricity_leader,
         inclination_leader,
         right_ascension_leader,
         argument_of_periapsis_leader,
-        true_anomaly_leader
+        true_anomaly_leader,
     )
     (
         semi_major_axis_follower,
@@ -1257,14 +1397,14 @@ def classical_to_relative_elements(
         e_y_follower,
         inclination_follower,
         right_ascension_follower,
-        mean_argument_of_latitude_follower
+        mean_argument_of_latitude_follower,
     ) = classical_to_non_singular_elements(
         semi_major_axis_follower,
         eccentricity_follower,
         inclination_follower,
         right_ascension_follower,
         argument_of_periapsis_follower,
-        true_anomaly_follower
+        true_anomaly_follower,
     )
     # convert the non-singular orbital elements to relative orbital elements
     return non_singular_to_relative_elements(
@@ -1279,16 +1419,16 @@ def classical_to_relative_elements(
         e_y_follower,
         inclination_follower,
         right_ascension_follower,
-        mean_argument_of_latitude_follower
+        mean_argument_of_latitude_follower,
     )
 
 
 def vector_to_relative_elements(
-        r_bn_n_leader: np.ndarray,
-        v_bn_n_leader: np.ndarray,
-        r_bn_n_follower: np.ndarray,
-        v_bn_n_follower: np.ndarray,
-        planet: str = "earth"
+    r_bn_n_leader: np.ndarray,
+    v_bn_n_leader: np.ndarray,
+    r_bn_n_follower: np.ndarray,
+    v_bn_n_follower: np.ndarray,
+    planet: str = "earth",
 ) -> Tuple[float, float, float, float, float, float]:
     """
     Convert the relative position and velocity vectors to relative orbital elements as defined in the PhD Thesis:
@@ -1330,24 +1470,24 @@ def vector_to_relative_elements(
             r_bn_n=r_bn_n_follower,
             v_bn_n=v_bn_n_follower,
             planet=planet,
-        )
+        ),
     )
 
 
 def classical_to_relative_elements_mean(
-        semi_major_axis_leader: float,
-        eccentricity_leader: float,
-        inclination_leader: float,
-        right_ascension_leader: float,
-        argument_of_periapsis_leader: float,
-        true_anomaly_leader: float,
-        semi_major_axis_follower: float,
-        eccentricity_follower: float,
-        inclination_follower: float,
-        right_ascension_follower: float,
-        argument_of_periapsis_follower: float,
-        true_anomaly_follower: float,
-        planet: str = "earth"
+    semi_major_axis_leader: float,
+    eccentricity_leader: float,
+    inclination_leader: float,
+    right_ascension_leader: float,
+    argument_of_periapsis_leader: float,
+    true_anomaly_leader: float,
+    semi_major_axis_follower: float,
+    eccentricity_follower: float,
+    inclination_follower: float,
+    right_ascension_follower: float,
+    argument_of_periapsis_follower: float,
+    true_anomaly_follower: float,
+    planet: str = "earth",
 ) -> Tuple[float, float, float, float, float, float]:
     """
     Convert classical orbital elements to relative orbital elements as defined in the PhD Thesis:
@@ -1391,7 +1531,7 @@ def classical_to_relative_elements_mean(
                     daoml: change in mean argument of latitude [m]
                 )
     :rtype: tuple
-"""
+    """
     req = get_planet_property(planet=planet, property="REQ")
     j2 = get_planet_property(planet=planet, property="j2")
     ce_leader_mean = mean_to_osculating_elements(
@@ -1403,7 +1543,7 @@ def classical_to_relative_elements_mean(
         true_anomaly=true_anomaly_leader,
         req=req,
         j2=j2,
-        mean_to_osculating=False
+        mean_to_osculating=False,
     )
     ce_follower_mean = mean_to_osculating_elements(
         semi_major_axis=semi_major_axis_follower,
@@ -1414,7 +1554,7 @@ def classical_to_relative_elements_mean(
         true_anomaly=true_anomaly_follower,
         req=req,
         j2=j2,
-        mean_to_osculating=False
+        mean_to_osculating=False,
     )
     return classical_to_relative_elements(
         semi_major_axis_leader=ce_leader_mean[0],
@@ -1433,11 +1573,11 @@ def classical_to_relative_elements_mean(
 
 
 def vector_to_relative_elements_mean(
-        r_bn_n_leader: np.ndarray,
-        v_bn_n_leader: np.ndarray,
-        r_bn_n_follower: np.ndarray,
-        v_bn_n_follower: np.ndarray,
-        planet: str = "earth"
+    r_bn_n_leader: np.ndarray,
+    v_bn_n_leader: np.ndarray,
+    r_bn_n_follower: np.ndarray,
+    v_bn_n_follower: np.ndarray,
+    planet: str = "earth",
 ) -> Tuple[float, float, float, float, float, float]:
     """
     Convert the relative position and velocity vectors to relative orbital elements as defined in the PhD Thesis:
@@ -1479,11 +1619,13 @@ def vector_to_relative_elements_mean(
             r_bn_n=r_bn_n_follower,
             v_bn_n=v_bn_n_follower,
             planet=planet,
-        )
+        ),
     )
 
 
-def argument_of_latitude(argument_of_periapsis: float, anomaly: float, angle_max=2*np.pi) -> float:
+def argument_of_latitude(
+    argument_of_periapsis: float, anomaly: float, angle_max=2 * np.pi
+) -> float:
     """
     Calculate the argument of latitude from the argument of periapsis and the true/mean anomaly.
 
@@ -1523,7 +1665,7 @@ def period(semi_major_axis: float, planet="earth") -> float:
     # calculate the gravitational parameter of the central body
     mu = get_planet_mu(planet)
     # calculate the orbital period
-    return 2 * np.pi * np.sqrt(semi_major_axis ** 3 / mu)
+    return 2 * np.pi * np.sqrt(semi_major_axis**3 / mu)
 
 
 def mean_motion(semi_major_axis: float, planet="earth") -> float:
@@ -1543,7 +1685,7 @@ def mean_motion(semi_major_axis: float, planet="earth") -> float:
     # calculate the gravitational parameter of the central body
     mu = get_planet_mu(planet)
     # calculate the mean motion
-    return np.sqrt(mu / semi_major_axis ** 3)
+    return np.sqrt(mu / semi_major_axis**3)
 
 
 def t_lvlh_eci(r_bn_n_chief: np.ndarray, v_bn_n_chief: np.ndarray) -> np.ndarray:
@@ -1574,7 +1716,9 @@ def t_lvlh_eci(r_bn_n_chief: np.ndarray, v_bn_n_chief: np.ndarray) -> np.ndarray
     return np.vstack((i_r, i_theta, i_h)).T  # Arrange the unit vectors as columns
 
 
-def t_dot_lvlh_eci(r_bn_n_chief: np.ndarray, v_bn_n_chief: np.ndarray, a_bn_n_chief: np.ndarray = None) -> np.ndarray:
+def t_dot_lvlh_eci(
+    r_bn_n_chief: np.ndarray, v_bn_n_chief: np.ndarray, a_bn_n_chief: np.ndarray = None
+) -> np.ndarray:
     """
     Calculate the time derivative of the transformation matrix of the LVLH frame based on the chief spacecraft's state
         vector.
@@ -1612,7 +1756,12 @@ def t_dot_lvlh_eci(r_bn_n_chief: np.ndarray, v_bn_n_chief: np.ndarray, a_bn_n_ch
     return np.array([ex_hat_dot, ey_hat_dot, ez_hat_dot]).T
 
 
-def relative_state_lvlh(r_bn_n_chief: np.ndarray, v_bn_n_chief: np.ndarray, r_bn_n_deputy: np.ndarray, v_bn_n_deputy: np.ndarray) -> np.ndarray:
+def relative_state_lvlh(
+    r_bn_n_chief: np.ndarray,
+    v_bn_n_chief: np.ndarray,
+    r_bn_n_deputy: np.ndarray,
+    v_bn_n_deputy: np.ndarray,
+) -> np.ndarray:
     """
     Calculate the relative position and velocity of a deputy spacecraft relative to a chief spacecraft
 
@@ -1640,7 +1789,9 @@ def relative_state_lvlh(r_bn_n_chief: np.ndarray, v_bn_n_chief: np.ndarray, r_bn
     return np.hstack((r_rel_lvlh, v_rel_lvlh))
 
 
-def future_relative_state_cw(omega: float, initial_state: np.ndarray, accelerations: np.ndarray, t: float) -> np.ndarray:
+def future_relative_state_cw(
+    omega: float, initial_state: np.ndarray, accelerations: np.ndarray, t: float
+) -> np.ndarray:
     """
     Calculate the future relative positions and velocities (x, y, z, dot_x, dot_y, dot_z)
     using the state transition matrix based on the analytical solutions to the Clohessy-Wiltshire
@@ -1682,33 +1833,57 @@ def future_relative_state_cw(omega: float, initial_state: np.ndarray, accelerati
     cos_2omega_t = np.cos(2 * omega * t)
 
     # Construct the state transition matrix for the CW equations
-    phi = np.array([
-        [4 - 3 * cos_omega_t, 0, 0, sin_omega_t / omega, (2 / omega) * (1 - cos_omega_t), 0],
-        [6 * (sin_omega_t - omega * t), 1, 0, -(2 / omega) * (1 - cos_omega_t),
-         (4 * sin_omega_t - 3 * omega * t) / omega, 0],
-        [0, 0, cos_omega_t, 0, 0, sin_omega_t / omega],
-        [3 * omega * sin_omega_t, 0, 0, cos_omega_t, 2 * sin_omega_t, 0],
-        [-6 * omega * (1 - cos_omega_t), 0, 0, -2 * sin_omega_t, 4 * cos_omega_t - 3, 0],
-        [0, 0, -omega * sin_omega_t, 0, 0, cos_omega_t]
-    ])
+    phi = np.array(
+        [
+            [
+                4 - 3 * cos_omega_t,
+                0,
+                0,
+                sin_omega_t / omega,
+                (2 / omega) * (1 - cos_omega_t),
+                0,
+            ],
+            [
+                6 * (sin_omega_t - omega * t),
+                1,
+                0,
+                -(2 / omega) * (1 - cos_omega_t),
+                (4 * sin_omega_t - 3 * omega * t) / omega,
+                0,
+            ],
+            [0, 0, cos_omega_t, 0, 0, sin_omega_t / omega],
+            [3 * omega * sin_omega_t, 0, 0, cos_omega_t, 2 * sin_omega_t, 0],
+            [
+                -6 * omega * (1 - cos_omega_t),
+                0,
+                0,
+                -2 * sin_omega_t,
+                4 * cos_omega_t - 3,
+                0,
+            ],
+            [0, 0, -omega * sin_omega_t, 0, 0, cos_omega_t],
+        ]
+    )
 
     # Construct the acceleration effect matrix
-    acc_effect = np.array([
+    acc_effect = np.array(
         [
-            -1/omega**2*cos_omega_t + 1/omega**2,
-            2*t/omega - 2*sin_omega_t/omega**2,
-            0
-        ],
-        [
-            -2*t/omega + 2*sin_omega_t/omega**2,
-            -3*t**2/2.0 - 4*cos_omega_t/omega**2 + 4/omega**2,
-            0
-        ],
-        [0, 0, -1/omega**2*cos_omega_t + 1/omega**2],
-        [1/omega*sin_omega_t, 2/omega - 2*cos_omega_t/omega, 0],
-        [-2/omega + 2*cos_omega_t/omega, -3*t + 4/omega*sin_omega_t, 0],
-        [0, 0, 1/omega*sin_omega_t]
-    ])
+            [
+                -1 / omega**2 * cos_omega_t + 1 / omega**2,
+                2 * t / omega - 2 * sin_omega_t / omega**2,
+                0,
+            ],
+            [
+                -2 * t / omega + 2 * sin_omega_t / omega**2,
+                -3 * t**2 / 2.0 - 4 * cos_omega_t / omega**2 + 4 / omega**2,
+                0,
+            ],
+            [0, 0, -1 / omega**2 * cos_omega_t + 1 / omega**2],
+            [1 / omega * sin_omega_t, 2 / omega - 2 * cos_omega_t / omega, 0],
+            [-2 / omega + 2 * cos_omega_t / omega, -3 * t + 4 / omega * sin_omega_t, 0],
+            [0, 0, 1 / omega * sin_omega_t],
+        ]
+    )
 
     # Compute the future state
     future_state = phi @ initial_state + acc_effect @ accelerations
@@ -1717,12 +1892,12 @@ def future_relative_state_cw(omega: float, initial_state: np.ndarray, accelerati
 
 
 def get_sun_synchronous_inclination_estimate(
-        orbit_mean_motion: float,
-        semi_latus_rectum: float,
-        planet_radius: float,
-        planet_semi_major_axis: float,
-        planet_j2: float,
-        planet: str
+    orbit_mean_motion: float,
+    semi_latus_rectum: float,
+    planet_radius: float,
+    planet_semi_major_axis: float,
+    planet_j2: float,
+    planet: str,
 ):
     """
     Calculates the sun synchronous inclination estimate based on the position
@@ -1744,8 +1919,15 @@ def get_sun_synchronous_inclination_estimate(
     :return: [rad] The estimated inclination of the orbit
     :rtype: float
     """
-    mean_motion_body = mean_motion(planet=planet, semi_major_axis=planet_semi_major_axis)
-    value = -2.0 * (semi_latus_rectum / planet_radius)**2 * mean_motion_body / (3.0 * orbit_mean_motion * planet_j2)
+    mean_motion_body = mean_motion(
+        planet=planet, semi_major_axis=planet_semi_major_axis
+    )
+    value = (
+        -2.0
+        * (semi_latus_rectum / planet_radius) ** 2
+        * mean_motion_body
+        / (3.0 * orbit_mean_motion * planet_j2)
+    )
     value = max(0.0, min(np.fabs(value), np.pi)) * np.sign(value)
     return np.arccos(value)
 
@@ -1764,7 +1946,9 @@ def semi_lactus_rectum(semi_major_axis: float, eccentricity: float) -> float:
     return semi_major_axis * (1 - eccentricity * eccentricity)
 
 
-def sun_synchronous_inclination(planet: str, semi_major_axis: float, eccentricity: float = 0.0) -> float:
+def sun_synchronous_inclination(
+    planet: str, semi_major_axis: float, eccentricity: float = 0.0
+) -> float:
     """
     Returns the inclination in radians of a defined SSO orbit based on the semi major axis and desired
     eccentricity of the orbit.
@@ -1792,7 +1976,7 @@ def sun_synchronous_inclination(planet: str, semi_major_axis: float, eccentricit
         planet_radius=req,
         planet_semi_major_axis=orbit_semi_major_axis,
         planet_j2=j2,
-        planet=planet
+        planet=planet,
     )
     inclination = 0.0
 
@@ -1800,14 +1984,21 @@ def sun_synchronous_inclination(planet: str, semi_major_axis: float, eccentricit
     error = 1.0
     # Iterate to find the inclination
     while error >= 1e-6 and it < 100:
-        mean_motion_j2 = n * (1 + 1.5 * j2 * (req / p)**2 * np.sqrt(1 - eccentricity * eccentricity) * (1 - 1.5 * np.sin(i0)**2))
+        mean_motion_j2 = n * (
+            1
+            + 1.5
+            * j2
+            * (req / p) ** 2
+            * np.sqrt(1 - eccentricity * eccentricity)
+            * (1 - 1.5 * np.sin(i0) ** 2)
+        )
         inclination = get_sun_synchronous_inclination_estimate(
             orbit_mean_motion=mean_motion_j2,
             semi_latus_rectum=p,
             planet_radius=req,
             planet_semi_major_axis=orbit_semi_major_axis,
             planet_j2=j2,
-            planet=planet
+            planet=planet,
         )
 
         error = abs(inclination - i0)

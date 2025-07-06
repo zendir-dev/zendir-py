@@ -12,7 +12,7 @@ some methods for serializing and deserializing JSON data to standard formats.
 import re
 import numpy as np
 from datetime import datetime
-from ..utils import NominalException
+from ..utils import ZendirException
 
 
 def empty_guid() -> str:
@@ -57,15 +57,12 @@ def is_valid_guid(guid: str) -> bool:
     return True
 
 
-def validate_type(type: str, namespace: str = "Classes") -> str:
+def validate_type(type: str) -> str:
     """
     Validates the type of the object and ensures that it is in the correct format.
-    This will return the correct type with the namespace if it is not already present.
 
     :param type:        The type of the object to validate
     :type type:         str
-    :param namespace:   The namespace to use for the type
-    :type namespace:    str
 
     :returns:           The validated type with the namespace
     :rtype:             str
@@ -73,66 +70,12 @@ def validate_type(type: str, namespace: str = "Classes") -> str:
 
     # Check for an invalid or missing
     if type == None or type == "":
-        raise NominalException(
+        raise ZendirException(
             "Invalid Type: No instance type passed when constructing an instance."
         )
 
     # Make sure the type is pascal cased
     type = type[0].upper() + type[1:]
-
-    # Ensure the type has the namespace
-    if "NominalSystems" not in type:
-        if "." not in type:
-            type = f"NominalSystems.{namespace}." + type
-        else:
-            type = "NominalSystems." + type
-
-    # For certain types, ensure the namespace is correct
-    universe_types: list = [
-        "UniverseObject",
-        "UniverseModel",
-        "UniverseBehaviour",
-        "UniverseSystem",
-        "ExtensionSystem",
-        "MaritimeSystem",
-        "SolarSystem",
-        "TrackingSystem",
-        "CelestialBody",
-        "PhysicalObject",
-        "DynamicEffector",
-        "StateEffector",
-        "GroundObject",
-        "GroundStation",
-        "Vehicle",
-        "Vessel",
-        "Rover",
-        "Spacecraft",
-        "StarSphere",
-        "BodyEffector",
-        "AlbedoPlanetModel",
-        "AlbedoModel",
-        "AtmosphereModel",
-        "AtmospherePlanetModel",
-        "AtmosphereExponentialPlanetModel",
-        "AtmosphereNRLMSISPlanetModel",
-        "ElectromagneticModel",
-        "GravityModel",
-        "MagneticFieldPlanetModel",
-        "MagneticFieldCenteredDipolePlanetModel",
-        "MagneticFieldWMMPlanetModel",
-        "MagneticModel",
-        "SolarModel",
-        "SphericalHarmonicsModel",
-        "StateModel",
-        "ThermalModel",
-    ]
-
-    # If the type is a universe type, ensure the namespace is correct
-    small_type: str = type.split(".")[-1]
-    if small_type in universe_types:
-        return "NominalSystems.Universe." + small_type
-
-    # Return the correct type
     return type
 
 
@@ -161,8 +104,8 @@ def serialize(value: any) -> any:
         return value.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
     # Check if the value is a simulation instance
-    if hasattr(value, "id") and hasattr(value, "get_type"):
-        return value.id
+    if hasattr(value, "get_id") and hasattr(value, "get_type"):
+        return value.get_id()
 
     # Return the value as is for other types
     return value
@@ -209,6 +152,12 @@ def deserialize(value: any) -> any:
                 return datetime.strptime(value[:-2], "%Y-%m-%dT%H:%M:%S.%f")
             except ValueError:
                 pass  # If parsing fails, return the original string
+
+    # Check if the value is a dictionary and then deserialize all values
+    if isinstance(value, dict):
+        for key, val in value.items():
+            value[key] = deserialize(val)
+        return value
 
     # Return the value as is for other types
     return value
