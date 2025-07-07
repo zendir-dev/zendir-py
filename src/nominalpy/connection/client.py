@@ -249,9 +249,7 @@ class Client:
                                 content_data: str = (
                                     content.decode("utf-8") if content else None
                                 )
-                                raise ZendirException(
-                                    f"Request failed: {response.status} {content_data}"
-                                )
+                                raise Exception(f"[{response.status}] {content_data}")
                             result = None
                             if content:
                                 try:
@@ -265,7 +263,7 @@ class Client:
                             if not future.done():
                                 future.set_result(result)
                             break
-                    except (aiohttp.ClientError, ZendirException) as e:
+                    except (aiohttp.ClientError, Exception) as e:
                         if attempt < 29:
                             await asyncio.sleep(0.1)
                             continue
