@@ -205,13 +205,8 @@ class Object(Instance):
         # Check the type and validate it
         type = helper.validate_type(type)
 
-        # Get the function library
-        function_library: Instance = await self._context.get_function_library()
-        if function_library is None:
-            raise ZendirException("Failed to get function library for the simulation.")
-
         # Invoke the function library to create the object
-        child_id: str = await function_library.invoke("AddObject", type, self.get_id())
+        child_id: str = await self.invoke("AddObject", type)
 
         # If the ID is not valid, raise an exception
         if not helper.is_valid_guid(child_id):
@@ -344,15 +339,8 @@ class Object(Instance):
         # Check the type and validate it
         type = helper.validate_type(type)
 
-        # Get the function library
-        function_library: Instance = await self._context.get_function_library()
-        if function_library is None:
-            raise ZendirException("Failed to get function library for the simulation.")
-
         # Invoke the function library to create the behaviour
-        behaviour_id: str = await function_library.invoke(
-            "AddBehaviour", type, self.get_id()
-        )
+        behaviour_id: str = await self.invoke("AddObject", type)
 
         # If the ID is not valid, raise an exception
         if not helper.is_valid_guid(behaviour_id):
