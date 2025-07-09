@@ -76,10 +76,10 @@ simulation = Simulation.get(credentials)
 The simulation class can be used to manage the objects, tick the simulation and track the state of data over the lifetime of the session. As an example, a spacecraft could be created using the following code:
 
 ```python
-from nominalpy import Object, types
+from nominalpy import Object
 
 spacecraft: Object = simulation.add_object(
-    types.SPACECRAFT,
+    "Spacecraft",
     Position=[6671000, 0, 0],
     Velocity=[0, -7700, 0],
     TotalMass=15.0,
