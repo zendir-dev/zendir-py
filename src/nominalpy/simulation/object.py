@@ -257,7 +257,8 @@ class Object(Instance):
         self.__instances[id] = object
 
         # Print the success message
-        printer.success(f"Successfully created child object of type '{type}'.")
+        if type != "":
+            printer.success(f"Successfully created child object of type '{type}'.")
         return object
 
     def __is_child_registered(self, id: str) -> bool:
@@ -496,7 +497,6 @@ class Object(Instance):
 
         # Create the behaviour
         behaviour = Behaviour(self._context, id, type, parent=self)
-        behaviour.__type = type
         self.__behaviours.append(behaviour)
         self.__instances[id] = behaviour
 
@@ -504,6 +504,60 @@ class Object(Instance):
         if type != "":
             printer.success(f"Successfully created child behaviour of type '{type}'.")
         return behaviour
+
+    def __is_behaviour_registered(self, id: str) -> bool:
+        """
+        Checks if a child behaviour with the specified ID is registered. This will
+        check down the hierarchy of child behaviours.
+
+        :param id:  The ID of the child behaviour to check
+        :type id:   str
+
+        :returns:   True if the child behaviour is registered, False otherwise
+        :rtype:     bool
+        """
+
+        # Check if the ID is in the instances
+        if id in self.__instances:
+            return True
+
+        # Check down the hierarchy of child objects
+        for child in self.__children:
+            if child.__is_behaviour_registered(id):
+                return True
+
+        # If not found, return False
+        return False
+
+    def __get_registered_behaviour(self, id: str, recurse: bool = True) -> Behaviour:
+        """
+        Returns the behaviour that is attached to the object with the specified ID. If the
+        behaviour does not exist, None will be returned. This will also look down the chain
+        of instances to find the behaviour, if specified.
+
+        :param id:  The ID of the behaviour to fetch
+        :type id:   str
+        :param recurse:  Whether to look down the chain of instances to find the child object
+        :type recurse:   bool
+
+        :returns:   The behaviour that is attached to the object with the specified ID
+        :rtype:     Behaviour
+        """
+
+        # Start by looking at the children for the ID
+        for behaviour in self.__behaviours:
+            if behaviour.get_id() == id:
+                return behaviour
+
+        # If recurse is enabled, look down the chain of instances
+        if recurse:
+            for child in self.__children:
+                result = child.__get_registered_behaviour(id, recurse)
+                if result:
+                    return result
+
+        # Return None if the behaviour is not found
+        return None
 
     def get_behaviour(self, index: int) -> Behaviour:
         """
@@ -532,13 +586,43 @@ class Object(Instance):
 
         return self.__behaviours
 
-    def get_behaviours_with_type(self, type: str) -> list[Behaviour]:
+    async def find_behaviour_with_type(
+        self, type: str, recurse: bool = True
+    ) -> Behaviour:
         """
-        Returns all of the behaviours that are attached to the object of the specified type.
-        If the type is not found, an empty list will be returned.
+        Finds the first behaviour that is attached to the object of the specified
+        type. If the type is not found, None will be returned.
+
+        :param type:    The type of the behaviour to fetch
+        :type type:     str
+        :param recurse: Whether to search recursively through child objects
+        :type recurse:  bool
+
+        :returns:       The first behaviour that is attached to the object of the specified type
+        :rtype:         Behaviour
+        """
+
+        # Fetch the children with the specified type and return the first one
+        behaviours: list[Behaviour] = await self.find_behaviours_with_type(
+            type, recurse=recurse
+        )
+        if len(behaviours) > 0:
+            return behaviours[0]
+
+        # If no behaviours were found, return None
+        return None
+
+    async def find_behaviours_with_type(
+        self, type: str, recurse: bool = True
+    ) -> list[Behaviour]:
+        """
+        Finds all of the behaviours that are attached to the object of the specified
+        type. If the type is not found, an empty list will be returned.
 
         :param type:    The type of the behaviours to fetch
         :type type:     str
+        :param recurse: Whether to search recursively through child objects
+        :type recurse:  bool
 
         :returns:       All of the behaviours that are attached to the object of the specified type
         :rtype:         list[Behaviour]
@@ -547,42 +631,67 @@ class Object(Instance):
         # Check the type and validate it
         type = helper.validate_type(type)
 
-        # Filter the children by type
-        return [
-            behaviour
-            for behaviour in self.__behaviours
-            if behaviour._Instance__type == type
+        # Fetch the behaviours with the specified type
+        behaviours_ids: list[str] = await self.invoke(
+            "FindBehavioursWithType", type, recurse
+        )
+
+        # For each behaviour, check if it exists. If it does not, we need to require
+        # a reload of the heirarchy to ensure that the behaviour is registered.
+        require_reload: bool = False
+        for behaviour_id in behaviours_ids:
+            if not self.__is_behaviour_registered(behaviour_id):
+                require_reload = True
+                break
+
+        # If required a reload, reload the heirarchy
+        if require_reload:
+            await self.__reload_heirarchy(recurse=True)
+
+        # Now, create an array with all behaviours from the IDs
+        behaviours: list[Behaviour] = [
+            self.__get_registered_behaviour(behaviour_id, recurse=True)
+            for behaviour_id in behaviours_ids
         ]
 
-    def get_behaviour_with_id(self, id: str, recurse: bool = True) -> Behaviour:
+        # Return the list
+        return behaviours
+
+    async def find_behaviour_with_id(self, id: str, recurse: bool = True) -> Behaviour:
         """
         Returns the behaviour that is attached to the object with the specified ID. If the
         behaviour does not exist, None will be returned. This will also look down the chain
-        of children to find the behaviour, if specified.
+        of instances to find the behaviour, if specified.
 
         :param id:  The ID of the behaviour to fetch
         :type id:   str
-        :param recurse:  Whether to look down the chain of children to find the behaviour
+        :param recurse:  Whether to look down the chain of instances to find the behaviour
         :type recurse:   bool
 
         :returns:   The behaviour that is attached to the object with the specified ID
         :rtype:     Behaviour
         """
 
-        # Start by looking at the behaviours for the ID
-        for behaviour in self.__behaviours:
-            if behaviour.get_id() == id:
-                return behaviour
+        # Fetch the behaviour with the specified ID
+        behaviour_id: str = await self.invoke("FindBehaviourWithID", id, recurse)
 
-        # If recurse is enabled, look down the chain of children
-        if recurse:
-            for child in self.__children:
-                result = child.get_behaviour_with_id(id, recurse)
-                if result:
-                    return result
+        # If the behaviour ID is not valid, return None
+        if not helper.is_valid_guid(behaviour_id):
+            return None
 
-        # Return None if the behaviour is not found
-        return None
+        # Check if the behaviour is not registered, and reload the heirarchy
+        if not self.__is_behaviour_registered(behaviour_id):
+            await self.__reload_heirarchy(recurse=True)
+
+        # Now, return the registered behaviour with the ID
+        behaviour: Behaviour = self.__get_registered_behaviour(
+            behaviour_id, recurse=recurse
+        )
+        if behaviour is None:
+            return None
+
+        # If the behaviour is found, return it
+        return behaviour
 
     async def get_model(self, type: str, **kwargs) -> Model:
         """
