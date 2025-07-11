@@ -25,6 +25,9 @@ class Instance:
     _refresh_cache: bool = True
     """Defines whether the cache needs to be refreshed or not."""
 
+    _ignore_refresh_override: bool = False
+    """Defines an override for when to ignore the required refresh, so that when fetching data, there is no recursion."""
+
     _context: Context = None
     """Defines the context that is used to access the API."""
 
@@ -75,7 +78,9 @@ class Instance:
         self.__data = await self._context.get_client().get(
             f"{self.get_id()}/get", id=self._context.get_id()
         )
-        self._refresh_cache = False
+        self._refresh_cache = (
+            self._context.always_require_refresh and not self._ignore_refresh_override
+        )
 
         # Loop through the data and deserialize it
         for key in self.__data:

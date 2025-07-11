@@ -99,6 +99,7 @@ class Object(Instance):
         # Fetch the base data
         if not self._refresh_cache:
             return
+        self._ignore_refresh_override = True
         await super()._get_data()
 
         # Loop through the behaviours
@@ -130,6 +131,10 @@ class Object(Instance):
                 printer.log(
                     f"Successfully created model of type '{await model.get_type()}' in the background."
                 )
+
+        # Now, set the override and the required refresh again
+        self._ignore_refresh_override = False
+        self._refresh_cache = self._context.always_require_refresh
 
     def _reset_refresh_cache(self) -> None:
         """

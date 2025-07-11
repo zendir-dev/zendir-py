@@ -13,6 +13,12 @@ class Context:
     engine and the function library.
     """
 
+    always_require_refresh: bool = False
+    """
+    Whether the context always requires a refresh, regardless of the variable data that
+    has been changed.
+    """
+
     async def get_function_library(self) -> any:
         """
         Returns the function library for the context.
