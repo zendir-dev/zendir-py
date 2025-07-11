@@ -19,7 +19,7 @@ class Client:
     Each simulation ID processes requests sequentially using its own session.
     """
 
-    def __init__(self, url: str = "https://api.zendir.io", token: Optional[str] = None):
+    def __init__(self, url: str = "https://api.zendir.io", token: Optional[str] = None, timeout: Optional[float] = 30):
         """
         Initialize the client with a base URL and optional token.
 
@@ -34,6 +34,7 @@ class Client:
         self.queues: Dict[str, asyncio.Queue] = {}
         self.tasks: Dict[str, asyncio.Task] = {}
         self._closed = False
+        self.timeout = timeout # Seconds
         atexit.register(self._sync_cleanup)
 
         # Fetch the session token if provided
@@ -311,7 +312,7 @@ class Client:
         future = asyncio.Future()
         await self.queues[id].put((method, endpoint, data, future))
         try:
-            async with asyncio.timeout(600.0):
+            async with asyncio.timeout(self.timeout):
                 return await future
         except asyncio.TimeoutError:
             if not future.done():
