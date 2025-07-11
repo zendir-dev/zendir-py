@@ -102,39 +102,47 @@ class Object(Instance):
         self._ignore_refresh_override = True
         await super()._get_data()
 
-        # Loop through the behaviours
-        for id in await self.get("Behaviours"):
-            if id not in self.__instances:
-                behaviour = Behaviour(self._context, id, parent=self)
-                self.__instances[id] = behaviour
-                self.__behaviours.append(behaviour)
-                printer.log(
-                    f"Successfully created child behaviour of type '{await behaviour.get_type()}' in the background."
-                )
-
-        # Loop through the children
-        for id in await self.get("Children"):
-            if id not in self.__instances:
-                child = Object(self._context, id, parent=self)
-                self.__instances[id] = child
-                self.__children.append(child)
-                printer.log(
-                    f"Successfully created child object of type '{await child.get_type()}' in the background."
-                )
-
-        # Loop through the models
-        for id in await self.get("Models"):
-            if id not in self.__instances:
-                model = Model(self._context, id, None, parent=self)
-                self.__instances[id] = model
-                self.__models[await model.get_type()] = model
-                printer.log(
-                    f"Successfully created model of type '{await model.get_type()}' in the background."
-                )
+        # Reload the heirarchies of the data
+        await self.__reload_heirarchy(recurse=False)
 
         # Now, set the override and the required refresh again
         self._ignore_refresh_override = False
         self._refresh_cache = self._context.always_require_refresh
+
+    async def __reload_heirarchy(self, recurse: bool = True) -> None:
+        """
+        Reloads the heirarchy of the object by fetching all the children, behaviours,
+        and models that are attached to the object. This will also ensure that all
+        objects are registered with the object and that the data is up to date.
+
+        :param recurse:  Whether to recursively reload the heirarchy of the children
+        :type recurse:   bool
+        """
+
+        # Get the children of the object
+        children_ids: list[str] = await self.get("Children")
+        for child_id in children_ids:
+            if child_id not in self.__instances:
+                self.__register_child(child_id, type="")
+
+        # Get the behaviours of the object
+        behaviours_ids: list[str] = await self.get("Behaviours")
+        for behaviour_id in behaviours_ids:
+            if behaviour_id not in self.__instances:
+                self.__register_behaviour(behaviour_id, type="")
+
+        # Now, get the models of the object
+        models_ids: list[str] = await self.get("Models")
+        for model_id in models_ids:
+            if model_id not in self.__instances:
+                model = Model(self._context, model_id, None, parent=self)
+                self.__instances[model_id] = model
+                self.__models[await model.get_type()] = model
+
+        # Now, for each of the children, reload the heirarchy
+        if recurse:
+            for child in self.__children:
+                await child.__reload_heirarchy()
 
     def _reset_refresh_cache(self) -> None:
         """
@@ -252,6 +260,60 @@ class Object(Instance):
         printer.success(f"Successfully created child object of type '{type}'.")
         return object
 
+    def __is_child_registered(self, id: str) -> bool:
+        """
+        Checks if a child object with the specified ID is registered. This will
+        check down the hierarchy of child objects.
+
+        :param id:  The ID of the child object to check
+        :type id:   str
+
+        :returns:   True if the child object is registered, False otherwise
+        :rtype:     bool
+        """
+
+        # Check if the ID is in the instances
+        if id in self.__instances:
+            return True
+
+        # Check down the hierarchy of child objects
+        for child in self.__children:
+            if child.__is_child_registered(id):
+                return True
+
+        # If not found, return False
+        return False
+
+    def __get_registered_child(self, id: str, recurse: bool = True) -> Object:
+        """
+        Returns the child object that is attached to the object with the specified ID. If the
+        child object does not exist, None will be returned. This will also look down the chain
+        of instances to find the child object, if specified.
+
+        :param id:  The ID of the child object to fetch
+        :type id:   str
+        :param recurse:  Whether to look down the chain of instances to find the child object
+        :type recurse:   bool
+
+        :returns:   The child object that is attached to the object with the specified ID
+        :rtype:     Object
+        """
+
+        # Start by looking at the children for the ID
+        for child in self.__children:
+            if child.get_id() == id:
+                return child
+
+        # If recurse is enabled, look down the chain of instances
+        if recurse:
+            for child in self.__children:
+                result = child.__get_registered_child(id, recurse)
+                if result:
+                    return result
+
+        # Return None if the child object is not found
+        return None
+
     def get_child(self, index: int) -> Object:
         """
         Returns the child object at the specified index. If the index is invalid, an
@@ -279,13 +341,41 @@ class Object(Instance):
 
         return self.__children
 
-    def get_children_with_type(self, type: str) -> list[Object]:
+    async def find_child_with_type(self, type: str, recurse: bool = True) -> Object:
         """
-        Returns all of the children objects that are attached to the object of the specified
+        Finds the first child object that is attached to the object of the specified
+        type. If the type is not found, None will be returned.
+
+        :param type:    The type of the child object to fetch
+        :type type:     str
+        :param recurse: Whether to search recursively through child objects
+        :type recurse:  bool
+
+        :returns:       The first child object that is attached to the object of the specified type
+        :rtype:         Object
+        """
+
+        # Fetch the children with the specified type and return the first one
+        children: list[Object] = await self.find_children_with_type(
+            type, recurse=recurse
+        )
+        if len(children) > 0:
+            return children[0]
+
+        # If no children were found, return None
+        return None
+
+    async def find_children_with_type(
+        self, type: str, recurse: bool = True
+    ) -> list[Object]:
+        """
+        Finds all of the children objects that are attached to the object of the specified
         type. If the type is not found, an empty list will be returned.
 
         :param type:    The type of the children objects to fetch
         :type type:     str
+        :param recurse: Whether to search recursively through child objects
+        :type recurse:  bool
 
         :returns:       All of the children objects that are attached to the object of the specified type
         :rtype:         list[Object]
@@ -294,10 +384,33 @@ class Object(Instance):
         # Check the type and validate it
         type = helper.validate_type(type)
 
-        # Filter the children by type
-        return [child for child in self.__children if child._Instance__type == type]
+        # Fetch the children with the specified type
+        children_ids: list[str] = await self.invoke(
+            "FindChildrenWithType", type, recurse
+        )
 
-    def get_child_with_id(self, id: str, recurse: bool = True) -> Object:
+        # For each child, check if it exists. If it does not, we need to require
+        # a reload of the heirarchy to ensure that the child is registered.
+        require_reload: bool = False
+        for child_id in children_ids:
+            if not self.__is_child_registered(child_id):
+                require_reload = True
+                break
+
+        # If required a reload, reload the heirarchy
+        if require_reload:
+            await self.__reload_heirarchy(recurse=True)
+
+        # Now, create an array with all children from the IDs
+        children: list[Object] = [
+            self.__get_registered_child(child_id, recurse=True)
+            for child_id in children_ids
+        ]
+
+        # Return the list
+        return children
+
+    async def find_child_with_id(self, id: str, recurse: bool = True) -> Object:
         """
         Returns the child object that is attached to the object with the specified ID. If the
         child object does not exist, None will be returned. This will also look down the chain
@@ -312,20 +425,24 @@ class Object(Instance):
         :rtype:     Object
         """
 
-        # Start by looking at the children for the ID
-        for child in self.__children:
-            if child.get_id() == id:
-                return child
+        # Fetch the child with the specified ID
+        child_id: str = await self.invoke("FindChildWithID", id, recurse)
 
-        # If recurse is enabled, look down the chain of instances
-        if recurse:
-            for child in self.__children:
-                result = child.get_child_with_id(id, recurse)
-                if result:
-                    return result
+        # If the child ID is not valid, return None
+        if not helper.is_valid_guid(child_id):
+            return None
 
-        # Return None if the child object is not found
-        return None
+        # Check if the child is not registered, and reload the heirarchy
+        if not self.__is_child_registered(child_id):
+            await self.__reload_heirarchy(recurse=True)
+
+        # Now, return the registered child with the ID
+        child: Object = self.__get_registered_child(child_id, recurse=recurse)
+        if child is None:
+            return None
+
+        # If the child is found, return it
+        return child
 
     async def add_behaviour(self, type: str, **kwargs) -> Behaviour:
         """
@@ -384,7 +501,8 @@ class Object(Instance):
         self.__instances[id] = behaviour
 
         # Print the success message
-        printer.success(f"Successfully created child behaviour of type '{type}'.")
+        if type != "":
+            printer.success(f"Successfully created child behaviour of type '{type}'.")
         return behaviour
 
     def get_behaviour(self, index: int) -> Behaviour:

@@ -452,7 +452,7 @@ class Simulation(Context):
                 return obj
 
             # Check children
-            obj: Object = obj.get_child_with_id(id, recurse=True)
+            obj: Object = await obj.find_child_with_id(id, recurse=True)
             if obj != None:
                 return obj
 
