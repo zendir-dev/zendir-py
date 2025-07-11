@@ -152,7 +152,7 @@ class Object(Instance):
 
         return self.__parent
 
-    def find_instance_with_id(self, id: str, recurse: bool = False) -> Instance:
+    def get_instance_with_id(self, id: str, recurse: bool = False) -> Instance:
         """
         Returns the instance that is attached to the object with the specified ID. If the
         instance does not exist, None will be returned.
@@ -173,15 +173,15 @@ class Object(Instance):
         # If recurse is enabled, look down the chain of children
         if recurse:
             for child in self.__children:
-                result = child.find_instance_with_id(id, recurse)
+                result = child.get_instance_with_id(id, recurse)
                 if result:
                     return result
             for behaviour in self.__behaviours:
-                result = behaviour.find_instance_with_id(id)
+                result = behaviour.get_instance_with_id(id)
                 if result:
                     return result
             for model in self.__models.values():
-                result = model.find_instance_with_id(id)
+                result = model.get_instance_with_id(id)
                 if result:
                     return result
 

@@ -262,13 +262,13 @@ class Simulation(Context):
         for planet in self.__planets.values():
             planet._require_refresh()
 
-    def __find_registered_instance(self, id: str) -> Instance:
+    def __get_registered_instance(self, id: str) -> Instance:
         """
-        Attempts to find the instance with the specified ID within the simulation. This will
-        search through all objects, behaviours, systems and messages to find the instance. If
+        Attempts to get the instance with the specified ID within the simulation. This will
+        search through all objects, behaviours, systems and messages to get the instance. If
         the instance is not found, None will be returned.
 
-        :param id:      The ID of the instance to find
+        :param id:      The ID of the instance to get
         :type id:       str
 
         :returns:       The instance with the specified ID
@@ -278,21 +278,21 @@ class Simulation(Context):
         for object in self.__objects:
             if object.get_id() == id:
                 return object
-            find: Instance = object.find_instance_with_id(id, True)
-            if find != None:
-                return find
+            get: Instance = object.get_instance_with_id(id, True)
+            if get != None:
+                return get
         for behaviour in self.__behaviours:
             if behaviour.get_id() == id:
                 return behaviour
-            find: Instance = behaviour.find_instance_with_id(id, True)
-            if find != None:
-                return find
+            get: Instance = behaviour.get_instance_with_id(id, True)
+            if get != None:
+                return get
         for system in self.__systems.values():
             if system.get_id() == id:
                 return system
-            find: Instance = system.find_instance_with_id(id, True)
-            if find != None:
-                return find
+            get: Instance = system.get_instance_with_id(id, True)
+            if get != None:
+                return get
         for message in self.__messages:
             if message.get_id() == id:
                 return message
@@ -915,7 +915,7 @@ class Simulation(Context):
             return None
 
         # Otherwise, check if the instance is already in the list
-        instance: Instance = self.__find_registered_instance(id)
+        instance: Instance = self.__get_registered_instance(id)
         if instance != None:
             return instance
 
@@ -953,7 +953,7 @@ class Simulation(Context):
         # Loop through the list
         instances: list = []
         for i in range(len(result)):
-            instance: Instance = self.__find_registered_instance(result[i])
+            instance: Instance = self.__get_registered_instance(result[i])
             if instance != None:
                 instances.append(instance)
             else:
@@ -986,7 +986,7 @@ class Simulation(Context):
             )
 
         # If the ID is already in the list, return it
-        instance: Instance = self.__find_registered_instance(id)
+        instance: Instance = self.__get_registered_instance(id)
         if instance != None:
             return instance
 

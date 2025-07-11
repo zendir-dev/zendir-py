@@ -46,7 +46,7 @@ class System(Instance):
             message._require_refresh()
         super()._require_refresh()
 
-    def find_instance_with_id(self, id: str, recurse: bool = False) -> "Instance":
+    def get_instance_with_id(self, id: str, recurse: bool = False) -> Instance:
         """
         Returns the instance that is attached to this behaviour with the specified ID. If the
         instance does not exist, None will be returned. This may be a message or a child instance
