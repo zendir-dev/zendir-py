@@ -35,7 +35,7 @@ class System(Instance):
         # Initialised the base data
         self.__messages = {}
 
-    def _require_refresh(self) -> None:
+    def _reset_refresh_cache(self) -> None:
         """
         Overrides the base class method to set the flag for refreshing the cache to true.
         This will ensure that all messages will also require a refresh.
@@ -43,8 +43,8 @@ class System(Instance):
 
         # Ensure all messages require a refresh too
         for message in self.__messages.values():
-            message._require_refresh()
-        super()._require_refresh()
+            message._reset_refresh_cache()
+        super()._reset_refresh_cache()
 
     def get_instance_with_id(self, id: str, recurse: bool = False) -> Instance:
         """

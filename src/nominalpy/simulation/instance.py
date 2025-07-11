@@ -81,7 +81,7 @@ class Instance:
         for key in self.__data:
             self.__data[key] = helper.deserialize(self.__data[key])
 
-    def _require_refresh(self) -> None:
+    def _reset_refresh_cache(self) -> None:
         """
         This function is used to set the flag for refreshing the cache to true.
         It can be overriden by a base class if additional functionality is required.
@@ -212,7 +212,7 @@ class Instance:
         )
 
         # Ensure that the cache is refreshed for the next get
-        self._require_refresh()
+        self._reset_refresh_cache()
 
     async def invoke(self, function: str, *args) -> any:
         """
@@ -244,7 +244,7 @@ class Instance:
         response = helper.deserialize(response)
 
         # Update the flag for needing to get values
-        self._require_refresh()
+        self._reset_refresh_cache()
         return response
 
     def __str__(self) -> str:

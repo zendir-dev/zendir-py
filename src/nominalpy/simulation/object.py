@@ -131,7 +131,7 @@ class Object(Instance):
                     f"Successfully created model of type '{await model.get_type()}' in the background."
                 )
 
-    def _require_refresh(self) -> None:
+    def _reset_refresh_cache(self) -> None:
         """
         Overrides the base class method to set the flag for refreshing the cache to true.
         This will ensure that all sub-objects will also require a refresh.
@@ -139,8 +139,8 @@ class Object(Instance):
 
         # Ensure all sub-objects require a refresh too
         for _, instance in self.__instances.items():
-            instance._require_refresh()
-        super()._require_refresh()
+            instance._reset_refresh_cache()
+        super()._reset_refresh_cache()
 
     def get_parent(self) -> Object:
         """

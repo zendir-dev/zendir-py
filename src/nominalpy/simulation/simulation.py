@@ -244,7 +244,7 @@ class Simulation(Context):
         # Create the request to the function
         return await self.get_system("ExtensionSystem")
 
-    def __require_refresh(self) -> None:
+    def __reset_refresh_cache(self) -> None:
         """
         Ensures that the simulation requires a refresh. This will ensure that all objects, behaviours,
         systems and messages will also require a refresh.
@@ -252,15 +252,15 @@ class Simulation(Context):
 
         # Ensure all sub-objects require a refresh too
         for object in self.__objects:
-            object._require_refresh()
+            object._reset_refresh_cache()
         for behaviour in self.__behaviours:
-            behaviour._require_refresh()
+            behaviour._reset_refresh_cache()
         for system in self.__systems.values():
-            system._require_refresh()
+            system._reset_refresh_cache()
         for message in self.__messages:
-            message._require_refresh()
+            message._reset_refresh_cache()
         for planet in self.__planets.values():
-            planet._require_refresh()
+            planet._reset_refresh_cache()
 
     def __get_registered_instance(self, id: str) -> Instance:
         """
@@ -1234,7 +1234,7 @@ class Simulation(Context):
         await self.__load_cache()
 
         # Ensure the refresh is required
-        self.__require_refresh()
+        self.__reset_refresh_cache()
 
         # Return the success
         return True
@@ -1281,7 +1281,7 @@ class Simulation(Context):
         await self.__load_cache()
 
         # Ensure the refresh is required
-        self.__require_refresh()
+        self.__reset_refresh_cache()
 
     async def get_time(self) -> float:
         """
@@ -1377,7 +1377,7 @@ class Simulation(Context):
             self.__time = final_time
 
         # Ensure the refresh is required
-        self.__require_refresh()
+        self.__reset_refresh_cache()
 
     async def get_tracking_interval(self) -> float:
         """

@@ -19,7 +19,12 @@ class Client:
     Each simulation ID processes requests sequentially using its own session.
     """
 
-    def __init__(self, url: str = "https://api.zendir.io", token: Optional[str] = None, timeout: Optional[float] = 30):
+    def __init__(
+        self,
+        url: str = "https://api.zendir.io",
+        token: Optional[str] = None,
+        timeout: Optional[float] = 30,
+    ):
         """
         Initialize the client with a base URL and optional token.
 
@@ -34,7 +39,7 @@ class Client:
         self.queues: Dict[str, asyncio.Queue] = {}
         self.tasks: Dict[str, asyncio.Task] = {}
         self._closed = False
-        self.timeout = timeout # Seconds
+        self.timeout = timeout  # Seconds
         atexit.register(self._sync_cleanup)
 
         # Fetch the session token if provided
@@ -373,21 +378,19 @@ class Client:
         return await self._request("DELETE", endpoint, id=id)
 
     @classmethod
-    def create_local(cls, port: int = 25565) -> "Client":
+    def create_local(cls, port: int = 25565, timeout: float = 30.0) -> "Client":
         """
         Create a local client with the specified port and request limits.
 
         :param port: The port to use for the local client.
         :type port: int
-        :param max_requests_per_client: The maximum number of requests per client.
-        :type max_requests_per_client: int
-        :param max_total_concurrent_requests: The maximum number of total concurrent requests.
-        :type max_total_concurrent_requests: int
+        :param timeout: The timeout for requests in seconds.
+        :type timeout: float
 
         :return: A new local client.
         :rtype: Client
         """
-        return Client(url=f"http://localhost:{port}")
+        return Client(url=f"http://localhost:{port}", timeout=timeout)
 
     def __get_session_info(self) -> List[dict]:
         """
