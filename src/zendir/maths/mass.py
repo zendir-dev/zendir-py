@@ -1,13 +1,13 @@
-#                     [ NOMINAL SYSTEMS ]
-# This code is developed by Nominal Systems to aid with communication
-# to the public API. All code is under the the license provided along
-# with the 'zendir' module. Copyright Nominal Systems, 2024.
+#                     [ ZENDIR ]
+# This code is developed by Zendir to aid with communication
+# to the public API. All code is under the the license provided
+# with the 'zendir' module. Copyright Zendir, 2025.
 
 import numpy as np
 
 
 """
-[Nominal] A static library that helps with converting different
+[Zendir] A static library that helps with converting different
 mass values between different frames of reference. These
 include Center of Masses and Moment of Inertias. The frames
 of reference are:

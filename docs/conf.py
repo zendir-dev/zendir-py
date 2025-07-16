@@ -12,9 +12,9 @@ sys.path.insert(0, os.path.abspath("../zendir/src/"))
 sys.path.insert(0, os.path.abspath("../zendir/src/zendir/"))
 
 project = "zendir"
-copyright = "2024, Nominal Systems"
-author = "Nominal Systems"
-release = "2024"
+copyright = "2025, Zendir"
+author = "Zendir"
+release = "2025"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

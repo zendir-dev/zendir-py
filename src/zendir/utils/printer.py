@@ -1,7 +1,7 @@
-#                     [ NOMINAL SYSTEMS ]
-# This code is developed by Nominal Systems to aid with communication
-# to the public API. All code is under the the license provided along
-# with the 'zendir' module. Copyright Nominal Systems, 2025.
+#                     [ ZENDIR ]
+# This code is developed by Zendir to aid with communication
+# to the public API. All code is under the the license provided
+# with the 'zendir' module. Copyright Zendir, 2025.
 
 """
 This module contains helper functions for printing lines to the console.
