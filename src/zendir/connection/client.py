@@ -308,21 +308,49 @@ class Client:
         :param id: Simulation ID for sequential processing.
         :return: Response data as a dictionary or string.
         """
-        if self._closed:
-            raise RuntimeError("Client is closed")
-        if id not in self.queues:
-            self.queues[id] = asyncio.Queue()
-            self.tasks[id] = asyncio.create_task(self._process_requests(id))
 
-        future = asyncio.Future()
-        await self.queues[id].put((method, endpoint, data, future))
-        try:
-            async with asyncio.timeout(self.timeout):
-                return await future
-        except asyncio.TimeoutError:
-            if not future.done():
-                future.set_exception(ZendirException("Request timed out"))
-            raise
+        body = None
+        headers = {}
+        if data:
+            if isinstance(data, str):
+                body = data.encode("utf-8")
+                headers["Content-Type"] = "text/plain"
+            elif isinstance(data, (list, dict)):
+                body = json.dumps(data).encode()
+                headers["Content-Type"] = "application/json"
+
+        url = f"{self.url}{endpoint.lstrip('/')}"
+
+        printer.log(f"Requesting {method} {url} with data: {data}")
+
+        async with aiohttp.ClientSession() as session:
+             async with session.request(method, url, data=body, headers=headers) as response:
+                body: bytes = await response.read()
+                printer.log(f"arrived")
+                if "Content-Type" in response.headers:
+                    match response.headers["Content-Type"]:
+                        case "text/plain":
+                            return body.decode()
+                        case "application/json":
+                            return json.loads(body.decode())
+                        case _:
+                            return None
+                return None
+        # if self._closed:
+        #     raise RuntimeError("Client is closed")
+        # if id not in self.queues:
+        #     self.queues[id] = asyncio.Queue()
+        #     self.tasks[id] = asyncio.create_task(self._process_requests(id))
+
+        # future = asyncio.Future()
+        # await self.queues[id].put((method, endpoint, data, future))
+        # try:
+        #     async with asyncio.timeout(self.timeout):
+        #         return await future
+        # except asyncio.TimeoutError:
+        #     if not future.done():
+        #         future.set_exception(ZendirException("Request timed out"))
+        #     raise
 
     async def get(self, endpoint: str, id: str = "default"):
         """
@@ -390,7 +418,7 @@ class Client:
         :return: A new local client.
         :rtype: Client
         """
-        return Client(url=f"http://localhost:{port}", timeout=timeout)
+        return Client(url=f"http://127.0.0.1:{port}", timeout=timeout)
 
     def __get_session_info(self) -> List[dict]:
         """
