@@ -1,7 +1,7 @@
 #                     [ NOMINAL SYSTEMS ]
-# This code is developed by Nominal Systems to aid with communication 
+# This code is developed by Nominal Systems to aid with communication
 # to the public API. All code is under the the license provided along
-# with the 'nominalpy' module. Copyright Nominal Systems, 2024.
+# with the 'zendir' module. Copyright Nominal Systems, 2024.
 
 import numpy as np
 
@@ -17,7 +17,9 @@ of reference are:
 """
 
 
-def moment_of_inertia_L_to_B(moi_L_L: np.ndarray, dcm_LB: np.ndarray, com_B_B: np.ndarray, mass: float) -> np.ndarray:
+def moment_of_inertia_L_to_B(
+    moi_L_L: np.ndarray, dcm_LB: np.ndarray, com_B_B: np.ndarray, mass: float
+) -> np.ndarray:
     """
     Converts a Moment of Inertia in the L frame to a Moment of
     Inertia in the B frame.
@@ -36,7 +38,9 @@ def moment_of_inertia_L_to_B(moi_L_L: np.ndarray, dcm_LB: np.ndarray, com_B_B: n
     return inertia_point_transform(moi_L_L, dcm_LB, com_B_B, mass)
 
 
-def moment_of_inertia_B_to_L(moi_B_B: np.ndarray, dcm_LB: np.ndarray, com_B_B: np.ndarray, mass: float) -> np.ndarray:
+def moment_of_inertia_B_to_L(
+    moi_B_B: np.ndarray, dcm_LB: np.ndarray, com_B_B: np.ndarray, mass: float
+) -> np.ndarray:
     """
     Converts a Moment of Inertia in the B frame to a Moment of
     Inertia in the L frame.
@@ -54,16 +58,16 @@ def moment_of_inertia_B_to_L(moi_B_B: np.ndarray, dcm_LB: np.ndarray, com_B_B: n
     """
     # Transpose of the dcm_LB matrix to reverse the transformation
     dcm_BL = dcm_LB.T
-    return inertia_inverse_point_transform(
-        moi_B_B,
-        dcm_BL,
-        com_B_B,
-        mass
-    )
+    return inertia_inverse_point_transform(moi_B_B, dcm_BL, com_B_B, mass)
 
 
-def moment_of_inertia_prime_L_to_B(moiPrime_L_L: np.ndarray, dcm_LB: np.ndarray, com_B_B: np.ndarray,
-                                   comDot_B_B: np.ndarray, mass: float) -> np.ndarray:
+def moment_of_inertia_prime_L_to_B(
+    moiPrime_L_L: np.ndarray,
+    dcm_LB: np.ndarray,
+    com_B_B: np.ndarray,
+    comDot_B_B: np.ndarray,
+    mass: float,
+) -> np.ndarray:
     """
     Converts a Moment of Inertia Prime (which is a derivative) from the L
     frame to a B frame.
@@ -81,10 +85,14 @@ def moment_of_inertia_prime_L_to_B(moiPrime_L_L: np.ndarray, dcm_LB: np.ndarray,
     :return: The moment of inertia in the B frame [kg m^2/s]
     :rtype: numpy.ndarray
     """
-    return inertia_prime_point_transform(moiPrime_L_L, dcm_LB, com_B_B, comDot_B_B, mass)
+    return inertia_prime_point_transform(
+        moiPrime_L_L, dcm_LB, com_B_B, comDot_B_B, mass
+    )
 
 
-def center_of_mass_L_to_B(com_L_L: np.ndarray, dcm_LB: np.ndarray, r_LB_B: np.ndarray) -> np.ndarray:
+def center_of_mass_L_to_B(
+    com_L_L: np.ndarray, dcm_LB: np.ndarray, r_LB_B: np.ndarray
+) -> np.ndarray:
     """
     Converts a Center of Mass in the L frame to a Center of Mass
     in the B frame.
@@ -104,7 +112,9 @@ def center_of_mass_L_to_B(com_L_L: np.ndarray, dcm_LB: np.ndarray, r_LB_B: np.nd
     return r_LmB_B
 
 
-def center_of_mass_B_to_L(com_B_B: np.ndarray, dcm_LB: np.ndarray, r_LB_B: np.ndarray) -> np.ndarray:
+def center_of_mass_B_to_L(
+    com_B_B: np.ndarray, dcm_LB: np.ndarray, r_LB_B: np.ndarray
+) -> np.ndarray:
     """
     Converts a Center of Mass in the B frame to a Center of Mass
     in the L frame.
@@ -152,7 +162,9 @@ def tensor_transform(tensor: np.ndarray, dcm: np.ndarray) -> np.ndarray:
     return dcm.T @ tensor @ dcm
 
 
-def inertia_point_transform(inertia: np.ndarray, dcm: np.ndarray, position: np.ndarray, mass: float) -> np.ndarray:
+def inertia_point_transform(
+    inertia: np.ndarray, dcm: np.ndarray, position: np.ndarray, mass: float
+) -> np.ndarray:
     """
     Transform an inertia tensor from the center-of-mass frame to a new frame.
 
@@ -172,8 +184,9 @@ def inertia_point_transform(inertia: np.ndarray, dcm: np.ndarray, position: np.n
     return i_parallel - mass * np.dot(r_tilde, r_tilde)
 
 
-def inertia_inverse_point_transform(inertia: np.ndarray, dcm: np.ndarray, position: np.ndarray,
-                                    mass: float) -> np.ndarray:
+def inertia_inverse_point_transform(
+    inertia: np.ndarray, dcm: np.ndarray, position: np.ndarray, mass: float
+) -> np.ndarray:
     """
     Transform an inertia tensor from a new frame back to the center-of-mass frame.
 
@@ -193,8 +206,13 @@ def inertia_inverse_point_transform(inertia: np.ndarray, dcm: np.ndarray, positi
     return tensor_transform(i_parallel, dcm)
 
 
-def inertia_prime_point_transform(inertia_prime: np.ndarray, dcm: np.ndarray, position: np.ndarray,
-                                  position_dot: np.ndarray, mass: float) -> np.ndarray:
+def inertia_prime_point_transform(
+    inertia_prime: np.ndarray,
+    dcm: np.ndarray,
+    position: np.ndarray,
+    position_dot: np.ndarray,
+    mass: float,
+) -> np.ndarray:
     """
     Transform an InertiaPrime tensor from the center-of-mass frame to a new frame.
 
@@ -219,7 +237,9 @@ def inertia_prime_point_transform(inertia_prime: np.ndarray, dcm: np.ndarray, po
     r_tilde_prime = skew_matrix(position_dot)
 
     # Apply the parallel axis theorem to the InertiaPrime tensor
-    return i_parallel - mass * (np.dot(r_tilde_prime, r_tilde) + np.dot(r_tilde, r_tilde_prime))
+    return i_parallel - mass * (
+        np.dot(r_tilde_prime, r_tilde) + np.dot(r_tilde, r_tilde_prime)
+    )
 
 
 def skew_matrix(vector: np.ndarray) -> np.ndarray:
@@ -231,8 +251,10 @@ def skew_matrix(vector: np.ndarray) -> np.ndarray:
     :return: The skew-symmetric matrix [3x3 matrix]
     :rtype: numpy.ndarray
     """
-    return np.array([
-        [0, -vector[2], vector[1]],
-        [vector[2], 0, -vector[0]],
-        [-vector[1], vector[0], 0]
-    ])
+    return np.array(
+        [
+            [0, -vector[2], vector[1]],
+            [vector[2], 0, -vector[0]],
+            [-vector[1], vector[0], 0],
+        ]
+    )

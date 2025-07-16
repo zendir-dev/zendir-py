@@ -2,15 +2,15 @@
                     [ NOMINAL SYSTEMS ]
 This code is developed by Nominal Systems to aid with communication
 to the public API. All code is under the the license provided along
-with the 'nominalpy' module. Copyright Nominal Systems, 2025.
+with the 'zendir' module. Copyright Nominal Systems, 2025.
 """
 
 from typing import Optional, Dict, Union
-from nominalpy.utils import printer, ZendirException, helper
+from zendir.utils import printer, ZendirException, helper
 import asyncio, aiohttp, json, atexit
 import requests, time
 from typing import Optional, Union, Dict, Any, List
-from nominalpy import __version__ as nominalpy_version
+from zendir import __version__ as zendir_version
 
 
 class Client:
@@ -485,14 +485,14 @@ class Client:
 
     def get_version(self) -> str:
         """
-        Fetch the version of the nominalpy package. This will return the version as a string.
+        Fetch the version of the zendir package. This will return the version as a string.
 
-        :return: The version of the nominalpy package.
+        :return: The version of the zendir package.
         :rtype: str
         """
 
-        # Fetch the version of 'nominalpy' to ensure compatibility
-        version: str = ".".join(nominalpy_version.split(".")[:3])
+        # Fetch the version of 'zendir' to ensure compatibility
+        version: str = ".".join(zendir_version.split(".")[:3])
         if len(version.split(".")) == 2:
             version += ".0"
         return version
@@ -510,7 +510,7 @@ class Client:
         if self.token is None or self.token == "":
             raise ValueError("Token must be provided to create a session.")
 
-        # Fetch the version of 'nominalpy' to ensure compatibility
+        # Fetch the version of 'zendir' to ensure compatibility
         version: str = self.get_version()
 
         # Create the data for the POST, including the version property

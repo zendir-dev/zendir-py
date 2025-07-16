@@ -1,7 +1,7 @@
 #                     [ NOMINAL SYSTEMS ]
-# This code is developed by Nominal Systems to aid with communication 
+# This code is developed by Nominal Systems to aid with communication
 # to the public API. All code is under the the license provided along
-# with the 'nominalpy' module. Copyright Nominal Systems, 2024.
+# with the 'zendir' module. Copyright Nominal Systems, 2024.
 
 from abc import ABC, abstractmethod
 from collections.abc import Container
@@ -9,8 +9,12 @@ from typing import Dict, Optional, Union, List
 
 import numpy as np
 
-from ..maths.astro import classical_to_vector_elements, mean_to_osculating_elements, get_planet_property, \
-    argument_of_latitude
+from ..maths.astro import (
+    classical_to_vector_elements,
+    mean_to_osculating_elements,
+    get_planet_property,
+    argument_of_latitude,
+)
 
 
 def state_vectors(method):
@@ -19,6 +23,7 @@ def state_vectors(method):
     :param method: the method to be decorated
     :return: the decorated method
     """
+
     def wrapper(self, *args, **kwargs):
         orbital_elements = method(self, *args, **kwargs)
         result = dict()
@@ -32,13 +37,14 @@ def state_vectors(method):
                 argument_of_periapsis=elements["argument_of_periapsis"],
                 true_anomaly=elements["true_anomaly"],
                 *args,
-                **kwargs
+                **kwargs,
             )
             result[i] = {
                 "r_bn_n": np.array(vectors[0]),
                 "v_bn_n": np.array(vectors[1]),
             }
         return result
+
     return wrapper
 
 
@@ -48,6 +54,7 @@ def classical_elements_mean(mean_to_osculating=False):
     :param method: the method to be decorated
     :return: the decorated method
     """
+
     def decorator(method):
         def wrapper(self, *args, **kwargs):
             orbital_elements = method(self, *args, **kwargs)
@@ -67,21 +74,27 @@ def classical_elements_mean(mean_to_osculating=False):
             #   vice versa
             return {
                 # use dictionary comprehension to map the keys to their respective orbital elements
-                i: {keys[j]: el for j, el in enumerate(
-                    mean_to_osculating_elements(
-                        req=req,
-                        j2=j2,
-                        semi_major_axis=elements["semi_major_axis"],
-                        eccentricity=elements["eccentricity"],
-                        inclination=elements["inclination"],
-                        right_ascension=elements["right_ascension"],
-                        argument_of_periapsis=elements["argument_of_periapsis"],
-                        true_anomaly=elements["true_anomaly"],
-                        mean_to_osculating=mean_to_osculating,
+                i: {
+                    keys[j]: el
+                    for j, el in enumerate(
+                        mean_to_osculating_elements(
+                            req=req,
+                            j2=j2,
+                            semi_major_axis=elements["semi_major_axis"],
+                            eccentricity=elements["eccentricity"],
+                            inclination=elements["inclination"],
+                            right_ascension=elements["right_ascension"],
+                            argument_of_periapsis=elements["argument_of_periapsis"],
+                            true_anomaly=elements["true_anomaly"],
+                            mean_to_osculating=mean_to_osculating,
+                        )
                     )
-                )} for i, elements in orbital_elements.items()
+                }
+                for i, elements in orbital_elements.items()
             }
+
         return wrapper
+
     return decorator
 
 
@@ -346,14 +359,14 @@ class Constellation(ABC):
             self.init_classical_elements(**kwargs)
 
     def set_mean_elements(
-            self,
-            semi_major_axis_mean: float = None,
-            eccentricity_mean: float = None,
-            inclination_mean: float = None,
-            right_ascension_mean: float = None,
-            argument_of_periapsis_mean: float = None,
-            true_anomaly_mean: float = None,
-            **kwargs
+        self,
+        semi_major_axis_mean: float = None,
+        eccentricity_mean: float = None,
+        inclination_mean: float = None,
+        right_ascension_mean: float = None,
+        argument_of_periapsis_mean: float = None,
+        true_anomaly_mean: float = None,
+        **kwargs,
     ):
         """
         set the mean orbital elements for every spacecraft in the constellation
@@ -373,17 +386,29 @@ class Constellation(ABC):
         :return:
         """
         if semi_major_axis_mean is None:
-            raise ValueError("Cannot set the mean orbital elements if the semi_major_axis is None")
+            raise ValueError(
+                "Cannot set the mean orbital elements if the semi_major_axis is None"
+            )
         if eccentricity_mean is None:
-            raise ValueError("Cannot set the mean orbital elements if the eccentricity is None")
+            raise ValueError(
+                "Cannot set the mean orbital elements if the eccentricity is None"
+            )
         if inclination_mean is None:
-            raise ValueError("Cannot set the mean orbital elements if the inclination is None")
+            raise ValueError(
+                "Cannot set the mean orbital elements if the inclination is None"
+            )
         if right_ascension_mean is None:
-            raise ValueError("Cannot set the mean orbital elements if the right_ascension is None")
+            raise ValueError(
+                "Cannot set the mean orbital elements if the right_ascension is None"
+            )
         if argument_of_periapsis_mean is None:
-            raise ValueError("Cannot set the mean orbital elements if the argument_of_periapsis is None")
+            raise ValueError(
+                "Cannot set the mean orbital elements if the argument_of_periapsis is None"
+            )
         if true_anomaly_mean is None:
-            raise ValueError("Cannot set the mean orbital elements if the true_anomaly is None")
+            raise ValueError(
+                "Cannot set the mean orbital elements if the true_anomaly is None"
+            )
         planet = kwargs.get("planet", "earth")
         req = get_planet_property(planet, "REQ")
         j2 = get_planet_property(planet, "J2")
@@ -592,7 +617,9 @@ class Constellation(ABC):
         """
         return spacecraft_id in self.spacecraft.keys()
 
-    def set_variable(self, spacecraft_ids: Optional[Union[int, List[int]]] = None, **kwargs):
+    def set_variable(
+        self, spacecraft_ids: Optional[Union[int, List[int]]] = None, **kwargs
+    ):
         """
         set variables for spacecraft in the constellation where the variables are input into the method as keyword
             arguments
@@ -616,8 +643,10 @@ class Constellation(ABC):
                 # if the value is a container, then set the variable for every spacecraft in the constellation
                 if isinstance(value, Container) and not isinstance(value, str):
                     if len(value) != len(spacecraft_ids):
-                        raise ValueError(f"The length of the value {variable} does not match the number of " +
-                                         f"spacecraft in the constellation {len(self)}")
+                        raise ValueError(
+                            f"The length of the value {variable} does not match the number of "
+                            + f"spacecraft in the constellation {len(self)}"
+                        )
                     self[spacecraft_id][variable] = value[spacecraft_id]
                 else:
                     self[spacecraft_id][variable] = value
@@ -642,7 +671,9 @@ class Coplanar(Constellation):
             self.spacecraft[i]["inclination"] = self.inclination
             self.spacecraft[i]["right_ascension"] = self.right_ascension
             self.spacecraft[i]["argument_of_periapsis"] = self.argument_of_periapsis
-            self.spacecraft[i]["true_anomaly"] = self.true_anomaly_offset + i * relative_phase
+            self.spacecraft[i]["true_anomaly"] = (
+                self.true_anomaly_offset + i * relative_phase
+            )
         return self._spacecraft
 
 
@@ -746,7 +777,7 @@ class WalkerDelta(Walker):
         if self.num_planes > self.num_satellites:
             self.num_planes = self.num_satellites
         # define the full rotation
-        full_rotation = 2*np.pi
+        full_rotation = 2 * np.pi
         # get the relative spacing parameter which must be within 0 and the number of planes
         relative_spacing = min(max(abs(self.relative_spacing), 0), self.num_planes)
         # calculate the relative phase which will determine the phase offset in true anomaly of spacecraft in every
@@ -758,18 +789,24 @@ class WalkerDelta(Walker):
         relative_anom = full_rotation / num_satellites_plane
         # raise an exception if the number of satellites isn't perfectly divisible into the number of planes
         if self.num_satellites % self.num_planes != 0:
-            raise ValueError("The number of satellites should be divisible by the number of planes")
+            raise ValueError(
+                "The number of satellites should be divisible by the number of planes"
+            )
         # set the initial orbital elements for each spacecraft in the constellation
         for i in range(self.num_planes):
             for j in range(num_satellites_plane):
-                true_anom = relative_phase * i + relative_anom * j + self.true_anomaly_offset
+                true_anom = (
+                    relative_phase * i + relative_anom * j + self.true_anomaly_offset
+                )
                 raan = full_rotation / self.num_planes * i + self.right_ascension
                 index = i * num_satellites_plane + j
                 self.spacecraft[index]["semi_major_axis"] = self.semi_major_axis
                 self.spacecraft[index]["eccentricity"] = self.eccentricity
                 self.spacecraft[index]["inclination"] = self.inclination
                 self.spacecraft[index]["right_ascension"] = raan
-                self.spacecraft[index]["argument_of_periapsis"] = self.argument_of_periapsis
+                self.spacecraft[index][
+                    "argument_of_periapsis"
+                ] = self.argument_of_periapsis
                 self.spacecraft[index]["true_anomaly"] = true_anom
         # return the orbital elements
         return self._spacecraft

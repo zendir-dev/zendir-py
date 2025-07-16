@@ -1,14 +1,14 @@
 #                     [ NOMINAL SYSTEMS ]
 # This code is developed by Nominal Systems to aid with communication
 # to the public API. All code is under the the license provided along
-# with the 'nominalpy' module. Copyright Nominal Systems, 2024.
+# with the 'zendir' module. Copyright Nominal Systems, 2024.
 import re
 from pathlib import Path
 from setuptools import setup, find_packages
 
 
 def get_version():
-    init_file = Path(__file__).parent / "src" / "nominalpy" / "__init__.py"
+    init_file = Path(__file__).parent / "src" / "zendir" / "__init__.py"
     content = init_file.read_text()
     match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', content)
     if match:
@@ -18,7 +18,7 @@ def get_version():
 
 # Setup the project
 setup(
-    name="nominalpy",
+    name="zendir",
     version=get_version(),
     packages=find_packages(where="src"),
     package_dir={"": "src"},
@@ -33,8 +33,8 @@ setup(
         "pytest-asyncio",
         "requests",
     ],
-    author="Nominal Systems",
-    author_email="support@nominalsys.com",
+    author="Zendir",
+    author_email="support@zendir.io",
     description="Python Interface to the Nominal API for simulations",
     long_description="This is the Python interface library for the Nominal API. \
         The Nominal API allows access to spacecraft and space-domain simulation functions \
@@ -42,5 +42,5 @@ setup(
         It enables accessing the REST API simulation functions in an easy format.\
         Examples of how to construct Nominal simulations are provided on the\
         Nominal Systems documentation found at https://docs.nominalsys.com.",
-    url="https://github.com/NominalSystems/nominalpy",
+    url="https://github.com/NominalSystems/zendir",
 )

@@ -1,21 +1,21 @@
 #                     [ NOMINAL SYSTEMS ]
-# This code is developed by Nominal Systems to aid with communication 
+# This code is developed by Nominal Systems to aid with communication
 # to the public API. All code is under the the license provided along
-# with the 'nominalpy' module. Copyright Nominal Systems, 2024.
+# with the 'zendir' module. Copyright Nominal Systems, 2024.
 
-'''
+"""
 This module contains public methods that aid with mathematical
 calculations and astrophysical dimensions.
-'''
+"""
 
 import numpy as np
 
 
 def acos_quadrant_check(adjacent: float, hypotenuse: float, test: float) -> float:
     """
-    Calculate an angle using the arccosine function and perform a 
-    quadrant check. The function calculates the angle using the arccosine 
-    of the ratio of the adjacent side to the hypotenuse. It adjusts the 
+    Calculate an angle using the arccosine function and perform a
+    quadrant check. The function calculates the angle using the arccosine
+    of the ratio of the adjacent side to the hypotenuse. It adjusts the
     angle based on the quadrant determined by the 'test' parameter.
 
     :param adjacent:    The length of the adjacent side of a right triangle.
@@ -36,12 +36,18 @@ def acos_quadrant_check(adjacent: float, hypotenuse: float, test: float) -> floa
         if np.fabs((adjacent - hypotenuse) / hypotenuse) < 1e-10:
             rat = 1.0
         else:
-            raise ValueError("The adjacent: {}, is greater than the hypotenuse: {}".format(adjacent, hypotenuse))
+            raise ValueError(
+                "The adjacent: {}, is greater than the hypotenuse: {}".format(
+                    adjacent, hypotenuse
+                )
+            )
     # Calculate the angle using arccos; adjust based on the 'test' parameter
-    return 2*np.pi - np.arccos(rat) if test < 0 else np.arccos(rat)
+    return 2 * np.pi - np.arccos(rat) if test < 0 else np.arccos(rat)
 
 
-def normalize_angle(angle: float | np.ndarray, angle_max: float = 2*np.pi) -> float | np.ndarray:
+def normalize_angle(
+    angle: float | np.ndarray, angle_max: float = 2 * np.pi
+) -> float | np.ndarray:
     """
     Normalize an angle or array of angles between 0 <= theta < angle_max, where angle_max is an arbitrary angle.
 

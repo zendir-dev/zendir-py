@@ -1,37 +1,37 @@
-nominalpy.utils package
+zendir.utils package
 =======================
 
 Submodules
 ----------
 
-nominalpy.utils.exception module
+zendir.utils.exception module
 --------------------------------
 
-.. automodule:: nominalpy.utils.exception
+.. automodule:: zendir.utils.exception
    :members:
    :undoc-members:
    :show-inheritance:
 
-nominalpy.utils.helper module
+zendir.utils.helper module
 -----------------------------
 
-.. automodule:: nominalpy.utils.helper
+.. automodule:: zendir.utils.helper
    :members:
    :undoc-members:
    :show-inheritance:
 
-nominalpy.utils.printer module
+zendir.utils.printer module
 ------------------------------
 
-.. automodule:: nominalpy.utils.printer
+.. automodule:: zendir.utils.printer
    :members:
    :undoc-members:
    :show-inheritance:
 
-nominalpy.utils.types module
+zendir.utils.types module
 ----------------------------
 
-.. automodule:: nominalpy.utils.types
+.. automodule:: zendir.utils.types
    :members:
    :undoc-members:
    :show-inheritance:
@@ -39,7 +39,7 @@ nominalpy.utils.types module
 Module contents
 ---------------
 
-.. automodule:: nominalpy.utils
+.. automodule:: zendir.utils
    :members:
    :undoc-members:
    :show-inheritance:

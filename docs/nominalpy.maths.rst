@@ -1,69 +1,69 @@
-nominalpy.maths package
+zendir.maths package
 =======================
 
 Submodules
 ----------
 
-nominalpy.maths.astro module
+zendir.maths.astro module
 ----------------------------
 
-.. automodule:: nominalpy.maths.astro
+.. automodule:: zendir.maths.astro
    :members:
    :undoc-members:
    :show-inheritance:
 
-nominalpy.maths.computer\_library module
+zendir.maths.computer\_library module
 ----------------------------------------
 
-.. automodule:: nominalpy.maths.computer_library
+.. automodule:: zendir.maths.computer_library
    :members:
    :undoc-members:
    :show-inheritance:
 
-nominalpy.maths.constants module
+zendir.maths.constants module
 --------------------------------
 
-.. automodule:: nominalpy.maths.constants
+.. automodule:: zendir.maths.constants
    :members:
    :undoc-members:
    :show-inheritance:
 
-nominalpy.maths.constellations module
+zendir.maths.constellations module
 -------------------------------------
 
-.. automodule:: nominalpy.maths.constellations
+.. automodule:: zendir.maths.constellations
    :members:
    :undoc-members:
    :show-inheritance:
 
-nominalpy.maths.data module
+zendir.maths.data module
 ---------------------------
 
-.. automodule:: nominalpy.maths.data
+.. automodule:: zendir.maths.data
    :members:
    :undoc-members:
    :show-inheritance:
 
-nominalpy.maths.kinematics module
+zendir.maths.kinematics module
 ---------------------------------
 
-.. automodule:: nominalpy.maths.kinematics
+.. automodule:: zendir.maths.kinematics
    :members:
    :undoc-members:
    :show-inheritance:
 
-nominalpy.maths.mass module
+zendir.maths.mass module
 ---------------------------
 
-.. automodule:: nominalpy.maths.mass
+.. automodule:: zendir.maths.mass
    :members:
    :undoc-members:
    :show-inheritance:
 
-nominalpy.maths.utils module
+zendir.maths.utils module
 ----------------------------
 
-.. automodule:: nominalpy.maths.utils
+.. automodule:: zendir.maths.utils
    :members:
    :undoc-members:
    :show-inheritance:
@@ -71,7 +71,7 @@ nominalpy.maths.utils module
 Module contents
 ---------------
 
-.. automodule:: nominalpy.maths
+.. automodule:: zendir.maths
    :members:
    :undoc-members:
    :show-inheritance:

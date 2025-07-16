@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>nominalpy.connection package &mdash; nominalpy 2023 documentation</title>
+  <title>zendir.connection package &mdash; zendir 2023 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
 
@@ -21,8 +21,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="nominalpy.data package" href="nominalpy.data.html" />
-    <link rel="prev" title="nominalpy package" href="nominalpy.html" /> 
+    <link rel="next" title="zendir.data package" href="zendir.data.html" />
+    <link rel="prev" title="zendir package" href="zendir.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -34,7 +34,7 @@
           
           
           <a href="index.html" class="icon icon-home">
-            nominalpy
+            zendir
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -46,24 +46,24 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="modules.html">nominalpy</a><ul class="current">
-<li class="toctree-l2 current"><a class="reference internal" href="nominalpy.html">nominalpy package</a><ul class="current">
-<li class="toctree-l3 current"><a class="reference internal" href="nominalpy.html#subpackages">Subpackages</a><ul class="current">
-<li class="toctree-l4 current"><a class="current reference internal" href="#">nominalpy.connection package</a><ul>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">zendir</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="zendir.html">zendir package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="zendir.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">zendir.connection package</a><ul>
 <li class="toctree-l5"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l5"><a class="reference internal" href="#module-nominalpy.connection.credentials">nominalpy.connection.credentials module</a></li>
-<li class="toctree-l5"><a class="reference internal" href="#module-nominalpy.connection.http">nominalpy.connection.http module</a></li>
-<li class="toctree-l5"><a class="reference internal" href="#module-nominalpy.connection">Module contents</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#module-zendir.connection.credentials">zendir.connection.credentials module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#module-zendir.connection.http">zendir.connection.http module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#module-zendir.connection">Module contents</a></li>
 </ul>
 </li>
-<li class="toctree-l4"><a class="reference internal" href="nominalpy.data.html">nominalpy.data package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="nominalpy.maths.html">nominalpy.maths package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="nominalpy.mqtt.html">nominalpy.mqtt package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="nominalpy.simulation.html">nominalpy.simulation package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="nominalpy.utils.html">nominalpy.utils package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zendir.data.html">zendir.data package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zendir.maths.html">zendir.maths package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zendir.mqtt.html">zendir.mqtt package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zendir.simulation.html">zendir.simulation package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="zendir.utils.html">zendir.utils package</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="nominalpy.html#module-nominalpy">Module contents</a></li>
+<li class="toctree-l3"><a class="reference internal" href="zendir.html#module-zendir">Module contents</a></li>
 </ul>
 </li>
 </ul>
@@ -76,7 +76,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">nominalpy</a>
+          <a href="index.html">zendir</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -84,11 +84,11 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="modules.html">nominalpy</a></li>
-          <li class="breadcrumb-item"><a href="nominalpy.html">nominalpy package</a></li>
-      <li class="breadcrumb-item active">nominalpy.connection package</li>
+          <li class="breadcrumb-item"><a href="modules.html">zendir</a></li>
+          <li class="breadcrumb-item"><a href="zendir.html">zendir package</a></li>
+      <li class="breadcrumb-item active">zendir.connection package</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/nominalpy.connection.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/zendir.connection.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -96,43 +96,43 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="nominalpy-connection-package">
-<h1>nominalpy.connection package<a class="headerlink" href="#nominalpy-connection-package" title="Link to this heading"></a></h1>
+  <section id="zendir-connection-package">
+<h1>zendir.connection package<a class="headerlink" href="#zendir-connection-package" title="Link to this heading"></a></h1>
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
 </section>
-<section id="module-nominalpy.connection.credentials">
-<span id="nominalpy-connection-credentials-module"></span><h2>nominalpy.connection.credentials module<a class="headerlink" href="#module-nominalpy.connection.credentials" title="Link to this heading"></a></h2>
+<section id="module-zendir.connection.credentials">
+<span id="zendir-connection-credentials-module"></span><h2>zendir.connection.credentials module<a class="headerlink" href="#module-zendir.connection.credentials" title="Link to this heading"></a></h2>
 <dl class="py class">
-<dt class="sig sig-object py" id="nominalpy.connection.credentials.Credentials">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">nominalpy.connection.credentials.</span></span><span class="sig-name descname"><span class="pre">Credentials</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'https://api.nominalsys.com'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">443</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#nominalpy.connection.credentials.Credentials" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="zendir.connection.credentials.Credentials">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">zendir.connection.credentials.</span></span><span class="sig-name descname"><span class="pre">Credentials</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'https://api.nominalsys.com'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">443</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#zendir.connection.credentials.Credentials" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>The Credentials class stores the credential access to the Nominal API 
 for making API calls to the server. This can allow for both a remote 
 or a local server call.</p>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="nominalpy.connection.credentials.Credentials.access_key">
-<span class="sig-name descname"><span class="pre">access_key</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></em><a class="headerlink" href="#nominalpy.connection.credentials.Credentials.access_key" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="zendir.connection.credentials.Credentials.access_key">
+<span class="sig-name descname"><span class="pre">access_key</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></em><a class="headerlink" href="#zendir.connection.credentials.Credentials.access_key" title="Link to this definition"></a></dt>
 <dd><p>Defines the access key if it exists for the API. This is required for cloud based API calls.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="nominalpy.connection.credentials.Credentials.copy">
-<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#nominalpy.connection.credentials.Credentials" title="nominalpy.connection.credentials.Credentials"><span class="pre">Credentials</span></a></span></span><a class="headerlink" href="#nominalpy.connection.credentials.Credentials.copy" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="zendir.connection.credentials.Credentials.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#zendir.connection.credentials.Credentials" title="zendir.connection.credentials.Credentials"><span class="pre">Credentials</span></a></span></span><a class="headerlink" href="#zendir.connection.credentials.Credentials.copy" title="Link to this definition"></a></dt>
 <dd><p>Copies the current credentials to a new instance of the credentials.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>A new instance of the credentials</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#nominalpy.connection.credentials.Credentials" title="nominalpy.connection.credentials.Credentials">Credentials</a></p>
+<dd class="field-even"><p><a class="reference internal" href="#zendir.connection.credentials.Credentials" title="zendir.connection.credentials.Credentials">Credentials</a></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="nominalpy.connection.credentials.Credentials.get_session_id">
-<span class="sig-name descname"><span class="pre">get_session_id</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#nominalpy.connection.credentials.Credentials.get_session_id" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="zendir.connection.credentials.Credentials.get_session_id">
+<span class="sig-name descname"><span class="pre">get_session_id</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#zendir.connection.credentials.Credentials.get_session_id" title="Link to this definition"></a></dt>
 <dd><p>Returns the session ID for the current session. This is used to track</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -145,14 +145,14 @@ or a local server call.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="nominalpy.connection.credentials.Credentials.is_local">
-<span class="sig-name descname"><span class="pre">is_local</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#nominalpy.connection.credentials.Credentials.is_local" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="zendir.connection.credentials.Credentials.is_local">
+<span class="sig-name descname"><span class="pre">is_local</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#zendir.connection.credentials.Credentials.is_local" title="Link to this definition"></a></dt>
 <dd><p>Defines whether the URL is a localhost one or not; used to ensure that a connection is valid.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="nominalpy.connection.credentials.Credentials.is_valid">
-<span class="sig-name descname"><span class="pre">is_valid</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#nominalpy.connection.credentials.Credentials.is_valid" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="zendir.connection.credentials.Credentials.is_valid">
+<span class="sig-name descname"><span class="pre">is_valid</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#zendir.connection.credentials.Credentials.is_valid" title="Link to this definition"></a></dt>
 <dd><p>Checks if the credentials are valid by checking if the URL is valid
 and the access key is valid.</p>
 <dl class="field-list simple">
@@ -166,14 +166,14 @@ and the access key is valid.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="nominalpy.connection.credentials.Credentials.port">
-<span class="sig-name descname"><span class="pre">port</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#nominalpy.connection.credentials.Credentials.port" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="zendir.connection.credentials.Credentials.port">
+<span class="sig-name descname"><span class="pre">port</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#zendir.connection.credentials.Credentials.port" title="Link to this definition"></a></dt>
 <dd><p>Defines the port for the API. If left as None, no port will be used.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="nominalpy.connection.credentials.Credentials.set_session_id">
-<span class="sig-name descname"><span class="pre">set_session_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">session_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#nominalpy.connection.credentials.Credentials.set_session_id" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="zendir.connection.credentials.Credentials.set_session_id">
+<span class="sig-name descname"><span class="pre">set_session_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">session_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#zendir.connection.credentials.Credentials.set_session_id" title="Link to this definition"></a></dt>
 <dd><p>Sets the session ID for the current session. This is used to track the
 current session and to ensure that the session is valid.</p>
 <dl class="field-list simple">
@@ -184,34 +184,34 @@ current session and to ensure that the session is valid.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="nominalpy.connection.credentials.Credentials.url">
-<span class="sig-name descname"><span class="pre">url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></em><a class="headerlink" href="#nominalpy.connection.credentials.Credentials.url" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="zendir.connection.credentials.Credentials.url">
+<span class="sig-name descname"><span class="pre">url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></em><a class="headerlink" href="#zendir.connection.credentials.Credentials.url" title="Link to this definition"></a></dt>
 <dd><p>Defines the base URL for the API. If empty, it assumes that the URL is localhost.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="nominalpy.connection.credentials.Credentials.version">
-<span class="sig-name descname"><span class="pre">version</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></em><a class="headerlink" href="#nominalpy.connection.credentials.Credentials.version" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="zendir.connection.credentials.Credentials.version">
+<span class="sig-name descname"><span class="pre">version</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></em><a class="headerlink" href="#zendir.connection.credentials.Credentials.version" title="Link to this definition"></a></dt>
 <dd><p>Defines the version of the API that is being used.</p>
 </dd></dl>
 
 </dd></dl>
 
 </section>
-<section id="module-nominalpy.connection.http">
-<span id="nominalpy-connection-http-module"></span><h2>nominalpy.connection.http module<a class="headerlink" href="#module-nominalpy.connection.http" title="Link to this heading"></a></h2>
+<section id="module-zendir.connection.http">
+<span id="zendir-connection-http-module"></span><h2>zendir.connection.http module<a class="headerlink" href="#module-zendir.connection.http" title="Link to this heading"></a></h2>
 <p>This modules assists with having some helper functions for requesting
 data from the API and ensuring the data is in the correct form, and
 handling any errors.</p>
 <dl class="py function">
-<dt class="sig sig-object py" id="nominalpy.connection.http.delete">
-<span class="sig-prename descclassname"><span class="pre">nominalpy.connection.http.</span></span><span class="sig-name descname"><span class="pre">delete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">credentials</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#nominalpy.connection.credentials.Credentials" title="nominalpy.connection.credentials.Credentials"><span class="pre">Credentials</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#nominalpy.connection.http.delete" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="zendir.connection.http.delete">
+<span class="sig-prename descclassname"><span class="pre">zendir.connection.http.</span></span><span class="sig-name descname"><span class="pre">delete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">credentials</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#zendir.connection.credentials.Credentials" title="zendir.connection.credentials.Credentials"><span class="pre">Credentials</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#zendir.connection.http.delete" title="Link to this definition"></a></dt>
 <dd><p>Performs a DELETE request to the API with the specified path and data. This
 will return the JSON data from the response if the request was successful.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>credentials</strong> (<a class="reference internal" href="#nominalpy.connection.credentials.Credentials" title="nominalpy.connection.credentials.Credentials"><em>Credentials</em></a>) – The credentials to access the API</p></li>
+<li><p><strong>credentials</strong> (<a class="reference internal" href="#zendir.connection.credentials.Credentials" title="zendir.connection.credentials.Credentials"><em>Credentials</em></a>) – The credentials to access the API</p></li>
 <li><p><strong>path</strong> (<em>str</em>) – The path to the API endpoint</p></li>
 <li><p><strong>data</strong> (<em>dict</em>) – The data to send to the API</p></li>
 </ul>
@@ -226,14 +226,14 @@ will return the JSON data from the response if the request was successful.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="nominalpy.connection.http.get">
-<span class="sig-prename descclassname"><span class="pre">nominalpy.connection.http.</span></span><span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">credentials</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#nominalpy.connection.credentials.Credentials" title="nominalpy.connection.credentials.Credentials"><span class="pre">Credentials</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#nominalpy.connection.http.get" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="zendir.connection.http.get">
+<span class="sig-prename descclassname"><span class="pre">zendir.connection.http.</span></span><span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">credentials</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#zendir.connection.credentials.Credentials" title="zendir.connection.credentials.Credentials"><span class="pre">Credentials</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#zendir.connection.http.get" title="Link to this definition"></a></dt>
 <dd><p>Performs a GET request to the API with the specified path and data. This
 will return the JSON data from the response if the request was successful.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>credentials</strong> (<a class="reference internal" href="#nominalpy.connection.credentials.Credentials" title="nominalpy.connection.credentials.Credentials"><em>Credentials</em></a>) – The credentials to access the API</p></li>
+<li><p><strong>credentials</strong> (<a class="reference internal" href="#zendir.connection.credentials.Credentials" title="zendir.connection.credentials.Credentials"><em>Credentials</em></a>) – The credentials to access the API</p></li>
 <li><p><strong>path</strong> (<em>str</em>) – The path to the API endpoint</p></li>
 <li><p><strong>data</strong> (<em>dict</em>) – The data to send to the API</p></li>
 </ul>
@@ -248,14 +248,14 @@ will return the JSON data from the response if the request was successful.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="nominalpy.connection.http.patch">
-<span class="sig-prename descclassname"><span class="pre">nominalpy.connection.http.</span></span><span class="sig-name descname"><span class="pre">patch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">credentials</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#nominalpy.connection.credentials.Credentials" title="nominalpy.connection.credentials.Credentials"><span class="pre">Credentials</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#nominalpy.connection.http.patch" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="zendir.connection.http.patch">
+<span class="sig-prename descclassname"><span class="pre">zendir.connection.http.</span></span><span class="sig-name descname"><span class="pre">patch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">credentials</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#zendir.connection.credentials.Credentials" title="zendir.connection.credentials.Credentials"><span class="pre">Credentials</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#zendir.connection.http.patch" title="Link to this definition"></a></dt>
 <dd><p>Performs a PATCH request to the API with the specified path and data. This
 will return the JSON data from the response if the request was successful.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>credentials</strong> (<a class="reference internal" href="#nominalpy.connection.credentials.Credentials" title="nominalpy.connection.credentials.Credentials"><em>Credentials</em></a>) – The credentials to access the API</p></li>
+<li><p><strong>credentials</strong> (<a class="reference internal" href="#zendir.connection.credentials.Credentials" title="zendir.connection.credentials.Credentials"><em>Credentials</em></a>) – The credentials to access the API</p></li>
 <li><p><strong>path</strong> (<em>str</em>) – The path to the API endpoint</p></li>
 <li><p><strong>data</strong> (<em>dict</em>) – The data to send to the API</p></li>
 </ul>
@@ -270,14 +270,14 @@ will return the JSON data from the response if the request was successful.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="nominalpy.connection.http.post">
-<span class="sig-prename descclassname"><span class="pre">nominalpy.connection.http.</span></span><span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">credentials</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#nominalpy.connection.credentials.Credentials" title="nominalpy.connection.credentials.Credentials"><span class="pre">Credentials</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#nominalpy.connection.http.post" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="zendir.connection.http.post">
+<span class="sig-prename descclassname"><span class="pre">zendir.connection.http.</span></span><span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">credentials</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#zendir.connection.credentials.Credentials" title="zendir.connection.credentials.Credentials"><span class="pre">Credentials</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#zendir.connection.http.post" title="Link to this definition"></a></dt>
 <dd><p>Performs a POST request to the API with the specified path and data. This
 will return the JSON data from the response if the request was successful.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>credentials</strong> (<a class="reference internal" href="#nominalpy.connection.credentials.Credentials" title="nominalpy.connection.credentials.Credentials"><em>Credentials</em></a>) – The credentials to access the API</p></li>
+<li><p><strong>credentials</strong> (<a class="reference internal" href="#zendir.connection.credentials.Credentials" title="zendir.connection.credentials.Credentials"><em>Credentials</em></a>) – The credentials to access the API</p></li>
 <li><p><strong>path</strong> (<em>str</em>) – The path to the API endpoint</p></li>
 <li><p><strong>data</strong> (<em>dict</em>) – The data to send to the API</p></li>
 </ul>
@@ -292,14 +292,14 @@ will return the JSON data from the response if the request was successful.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="nominalpy.connection.http.put">
-<span class="sig-prename descclassname"><span class="pre">nominalpy.connection.http.</span></span><span class="sig-name descname"><span class="pre">put</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">credentials</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#nominalpy.connection.credentials.Credentials" title="nominalpy.connection.credentials.Credentials"><span class="pre">Credentials</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#nominalpy.connection.http.put" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="zendir.connection.http.put">
+<span class="sig-prename descclassname"><span class="pre">zendir.connection.http.</span></span><span class="sig-name descname"><span class="pre">put</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">credentials</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#zendir.connection.credentials.Credentials" title="zendir.connection.credentials.Credentials"><span class="pre">Credentials</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#zendir.connection.http.put" title="Link to this definition"></a></dt>
 <dd><p>Performs a PUT request to the API with the specified path and data. This
 will return the JSON data from the response if the request was successful.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>credentials</strong> (<a class="reference internal" href="#nominalpy.connection.credentials.Credentials" title="nominalpy.connection.credentials.Credentials"><em>Credentials</em></a>) – The credentials to access the API</p></li>
+<li><p><strong>credentials</strong> (<a class="reference internal" href="#zendir.connection.credentials.Credentials" title="zendir.connection.credentials.Credentials"><em>Credentials</em></a>) – The credentials to access the API</p></li>
 <li><p><strong>path</strong> (<em>str</em>) – The path to the API endpoint</p></li>
 <li><p><strong>data</strong> (<em>dict</em>) – The data to send to the API</p></li>
 </ul>
@@ -314,8 +314,8 @@ will return the JSON data from the response if the request was successful.</p>
 </dd></dl>
 
 </section>
-<section id="module-nominalpy.connection">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-nominalpy.connection" title="Link to this heading"></a></h2>
+<section id="module-zendir.connection">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-zendir.connection" title="Link to this heading"></a></h2>
 </section>
 </section>
 
@@ -323,8 +323,8 @@ will return the JSON data from the response if the request was successful.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="nominalpy.html" class="btn btn-neutral float-left" title="nominalpy package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="nominalpy.data.html" class="btn btn-neutral float-right" title="nominalpy.data package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="zendir.html" class="btn btn-neutral float-left" title="zendir package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="zendir.data.html" class="btn btn-neutral float-right" title="zendir.data package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

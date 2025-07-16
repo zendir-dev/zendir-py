@@ -1,13 +1,13 @@
-nominalpy.data package
+zendir.data package
 ======================
 
 Submodules
 ----------
 
-nominalpy.data.frame module
+zendir.data.frame module
 ---------------------------
 
-.. automodule:: nominalpy.data.frame
+.. automodule:: zendir.data.frame
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,7 +15,7 @@ nominalpy.data.frame module
 Module contents
 ---------------
 
-.. automodule:: nominalpy.data
+.. automodule:: zendir.data
    :members:
    :undoc-members:
    :show-inheritance:

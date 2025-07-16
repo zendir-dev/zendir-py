@@ -1,7 +1,7 @@
 #                     [ NOMINAL SYSTEMS ]
-# This code is developed by Nominal Systems to aid with communication 
+# This code is developed by Nominal Systems to aid with communication
 # to the public API. All code is under the the license provided along
-# with the 'nominalpy' module. Copyright Nominal Systems, 2024.
+# with the 'zendir' module. Copyright Nominal Systems, 2024.
 
 import json
 
@@ -48,7 +48,7 @@ def create_guidance_command(
     pointing: str = "Inertial",
     controller: str = "MRP",
     mapping: str = "ReactionWheels",
-    time: float = 0.0
+    time: float = 0.0,
 ) -> dict:
     """
     Creates a guidance command for the spacecraft operation computer to execute
@@ -72,18 +72,15 @@ def create_guidance_command(
         "navigation": navigation,
         "pointing": pointing,
         "controller": controller,
-        "mapping": mapping
+        "mapping": mapping,
     }
 
     # Return the generated command by calling create_command with the arguments
     return create_command("guidance", args, time)
 
+
 def create_guidance_command_string(
-    navigation: str,
-    pointing: str,
-    controller: str,
-    mapping: str,
-    time: float
+    navigation: str, pointing: str, controller: str, mapping: str, time: float
 ) -> str:
     """
     Creates a guidance command for the spacecraft operation computer and returns it as a JSON string.
