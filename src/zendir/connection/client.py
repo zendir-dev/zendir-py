@@ -35,12 +35,7 @@ class Client:
         self.url = ""
         self.session = ""
         self.token = token
-        self.sessions: Dict[str, aiohttp.ClientSession] = {}
-        self.queues: Dict[str, asyncio.Queue] = {}
-        self.tasks: Dict[str, asyncio.Task] = {}
-        self._closed = False
-        self.timeout = timeout  # Seconds
-        atexit.register(self._sync_cleanup)
+        self.timeout = timeout
 
         # Fetch the session token if provided
         if self.token != None:
@@ -137,167 +132,11 @@ class Client:
                     "This may not work as expected without authentication."
                 )
 
-    def _sync_cleanup(self):
-        """
-        Synchronous cleanup for program exit.
-        """
-        if self._closed:
-            return
-        try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            loop.run_until_complete(self._close())
-            if not loop.is_closed():
-                loop.close()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            loop.run_until_complete(self._close())
-            loop.close()
-        except Exception:
-            pass
-
-    def __del__(self):
-        """
-        Ensure cleanup when the object is garbage-collected.
-        """
-        if not self._closed:
-            self._sync_cleanup()
-
-    async def _close(self):
-        """
-        Close all sessions and cancel tasks.
-        """
-        if self._closed:
-            return
-        self._closed = True
-        for id, task in self.tasks.items():
-            if task and not task.done():
-                task.cancel()
-                try:
-                    await task
-                except asyncio.CancelledError:
-                    pass
-        for id, session in self.sessions.items():
-            if not session.closed:
-                await session.close()
-        self.sessions.clear()
-        self.queues.clear()
-        self.tasks.clear()
-
-    async def _process_requests(self, id: str):
-        """
-        Process requests for a simulation ID sequentially.
-
-        :param id: The simulation ID.
-        """
-        queue = self.queues.get(id)
-        if not queue:
-            return
-        if id not in self.sessions:
-            self.sessions[id] = aiohttp.ClientSession(trust_env=True)
-        session = self.sessions[id]
-
-        while not self._closed:
-            future = None
-            try:
-                async with asyncio.timeout(60.0):
-                    method, endpoint, data, future = await queue.get()
-
-                if session.closed:
-                    if not future.done():
-                        future.set_exception(ZendirException("Session closed"))
-                    queue.task_done()
-                    continue
-
-                headers = {"Accept": "application/json"}
-                if self.token:
-                    headers["X-Api-Key"] = self.token
-                timeout = aiohttp.ClientTimeout(total=60.0)
-
-                body = None
-                if isinstance(data, str):
-                    headers["Content-Type"] = "text/plain"
-                    body = data.encode("utf-8") if data else None
-                elif isinstance(data, (list, dict)):
-                    headers["Content-Type"] = "application/json"
-                    body = data
-                elif data is None:
-                    headers["Content-Type"] = "application/json"
-                    body = None
-                else:
-                    if not future.done():
-                        future.set_exception(
-                            ValueError("Data must be a string, list, dict, or None")
-                        )
-                    queue.task_done()
-                    continue
-
-                url = f"{self.url}{endpoint.lstrip('/')}"
-
-                # Print the request details for debugging
-                printer.log(f"Requesting {method} {url} with data: {body}")
-
-                for attempt in range(30):
-                    try:
-                        async with session.request(
-                            method,
-                            url,
-                            json=body if isinstance(body, (list, dict)) else None,
-                            data=body if not isinstance(body, (list, dict)) else None,
-                            headers=headers,
-                            timeout=timeout,
-                        ) as response:
-                            content = await response.read()
-                            if response.status != 200:
-                                content_data: str = (
-                                    content.decode("utf-8") if content else None
-                                )
-                                raise Exception(f"[{response.status}] {content_data}")
-                            result = None
-                            if content:
-                                try:
-                                    result = json.loads(content)
-                                except json.JSONDecodeError:
-                                    result = content.decode("utf-8")
-
-                            # Print the response details for debugging
-                            printer.log(f"Response from {method} {url}: {result}.")
-
-                            if not future.done():
-                                future.set_result(result)
-                            break
-                    except (aiohttp.ClientError, Exception) as e:
-                        if attempt < 29:
-                            await asyncio.sleep(0.1)
-                            continue
-                        if not future.done():
-                            future.set_exception(
-                                ZendirException(f"Request failed: {e}")
-                            )
-                queue.task_done()
-            except asyncio.TimeoutError:
-                if queue.empty() and self._closed:
-                    break
-            except asyncio.CancelledError:
-                break
-            except Exception as e:
-                if future is not None and not future.done():
-                    future.set_exception(e)
-                try:
-                    if "queue" in locals():
-                        queue.task_done()
-                except:
-                    pass
-
     async def _request(
         self,
         method: str,
         endpoint: str,
         data: Optional[Union[str, list, dict]] = None,
-        id: str = "default",
     ):
         """
         Make an HTTP request for a given simulation ID.
@@ -305,52 +144,72 @@ class Client:
         :param method: HTTP method (GET, POST, etc.).
         :param endpoint: API endpoint.
         :param data: Data to send with the request.
-        :param id: Simulation ID for sequential processing.
         :return: Response data as a dictionary or string.
         """
 
-        body = None
-        headers = {}
-        if data:
-            if isinstance(data, str):
-                body = data.encode("utf-8")
-                headers["Content-Type"] = "text/plain"
-            elif isinstance(data, (list, dict)):
-                body = json.dumps(data).encode()
-                headers["Content-Type"] = "application/json"
+        # Creates the data and headers for the request
+        try:
+            body = None
+            headers = {}
+            if data:
+                if isinstance(data, str):
+                    body = data.encode("utf-8")
+                    headers["Content-Type"] = "text/plain"
+                    headers["Content-Length"] = str(len(body))
+                elif isinstance(data, (list, dict)):
+                    body = json.dumps(data).encode()
+                    headers["Content-Type"] = "application/json"
+                    headers["Content-Length"] = str(len(body))
 
+        # Catch any exceptions that occur during data preparation
+        except Exception as e:
+            raise ZendirException(f"Failed to prepare request data: {e}")
+
+        # Add the token to the headers if it exists
+        if self.token:
+            headers["X-Api-Key"] = self.token
+
+        # Define the URL for the request
         url = f"{self.url}{endpoint.lstrip('/')}"
 
+        # Print the request details for debugging
         printer.log(f"Requesting {method} {url} with data: {data}")
 
+        # Open a new session
         async with aiohttp.ClientSession() as session:
-             async with session.request(method, url, data=body, headers=headers) as response:
-                body: bytes = await response.read()
-                printer.log(f"arrived")
-                if "Content-Type" in response.headers:
-                    match response.headers["Content-Type"]:
-                        case "text/plain":
-                            return body.decode()
-                        case "application/json":
-                            return json.loads(body.decode())
-                        case _:
-                            return None
-                return None
-        # if self._closed:
-        #     raise RuntimeError("Client is closed")
-        # if id not in self.queues:
-        #     self.queues[id] = asyncio.Queue()
-        #     self.tasks[id] = asyncio.create_task(self._process_requests(id))
 
-        # future = asyncio.Future()
-        # await self.queues[id].put((method, endpoint, data, future))
-        # try:
-        #     async with asyncio.timeout(self.timeout):
-        #         return await future
-        # except asyncio.TimeoutError:
-        #     if not future.done():
-        #         future.set_exception(ZendirException("Request timed out"))
-        #     raise
+            # Create a request and read the response
+            async with session.request(
+                method, url, data=body, headers=headers, timeout=self.timeout
+            ) as response:
+
+                # Check the status of the response
+                if response.status != 200:
+                    content_data: str = await response.text()
+                    raise ZendirException(
+                        f"Request failed with status {response.status}: {content_data}"
+                    )
+
+                # Read the response body
+                body: bytes = await response.read()
+
+                # Attempt to decode the response based on the Content-Type header
+                if "Content-Type" in response.headers:
+                    try:
+                        match response.headers["Content-Type"]:
+                            case "text/plain":
+                                return body.decode()
+                            case "application/json":
+                                return json.loads(body.decode())
+                            case _:
+                                return None
+
+                    # Raise an exception if the response cannot be decoded
+                    except Exception as e:
+                        raise ZendirException(f"Failed to decode response: {e}")
+
+                # Return None if no Content-Type header is present
+                return None
 
     async def get(self, endpoint: str, id: str = "default"):
         """
@@ -367,7 +226,7 @@ class Client:
         :return: The result of the request.
         :rtype: dict
         """
-        return await self._request("GET", endpoint, id=id)
+        return await self._request("GET", endpoint)
 
     async def post(
         self, endpoint: str, data: Optional[Any] = None, id: str = "default"
@@ -386,7 +245,7 @@ class Client:
         :return: The result of the request.
         :rtype: dict
         """
-        return await self._request("POST", endpoint, data, id=id)
+        return await self._request("POST", endpoint, data)
 
     async def delete(self, endpoint: str, id: str = "default"):
         """
@@ -403,7 +262,7 @@ class Client:
         :return: The result of the request.
         :rtype: dict
         """
-        return await self._request("DELETE", endpoint, id=id)
+        return await self._request("DELETE", endpoint)
 
     @classmethod
     def create_local(cls, port: int = 25565, timeout: float = 30.0) -> "Client":
