@@ -54,6 +54,9 @@ __verbose_level: int = 0
 # Defines whether a timestamp should be shown
 __display_time: bool = False
 
+# Defines any callbacks
+__callbacks: list = []
+
 
 def set_verbosity(level: int) -> None:
     """
@@ -111,6 +114,7 @@ def log(data: str) -> None:
     :type data:     str
     """
 
+    __call_callbacks("log", data)
     if __verbose_level <= LOG_VERBOSITY:
         output(data, __LOG)
 
@@ -124,6 +128,7 @@ def success(data: str) -> None:
     :type data:     str
     """
 
+    __call_callbacks("success", data)
     if __verbose_level <= SUCCESS_VERBOSITY:
         output(data, __SUCCESS)
 
@@ -138,6 +143,7 @@ def info(data: str) -> None:
     :type data:     str
     """
 
+    __call_callbacks("info", data)
     if __verbose_level <= INFO_VERBOSITY:
         output(data, __INFO)
 
@@ -152,6 +158,7 @@ def warning(data: str) -> None:
     :type data:     str
     """
 
+    __call_callbacks("warning", data)
     if __verbose_level <= WARNING_VERBOSITY:
         output(data, __WARNING)
 
@@ -165,6 +172,7 @@ def error(data: str) -> None:
     :type data:     str
     """
 
+    __call_callbacks("error", data)
     if __verbose_level <= ERROR_VERBOSITY:
         output(data, __ERROR)
 
@@ -179,6 +187,7 @@ def debug(data: str) -> None:
     :type data:     str
     """
 
+    __call_callbacks("debug", data)
     output(data, __DEBUG)
 
 
@@ -193,6 +202,49 @@ def display_time(enable: bool) -> None:
 
     global __display_time
     __display_time = enable
+
+
+def add_callback(callback: callable) -> None:
+    """
+    Adds a callback function that will be called whenever a message is printed.
+    This can be used to log messages or perform other actions when printing.
+
+    :param callback: The callback function to add
+    :type callback: callable
+    """
+
+    if callable(callback):
+        __callbacks.append(callback)
+    else:
+        raise TypeError("Callback must be a callable function.")
+
+
+def remove_callback(callback: callable) -> None:
+    """
+    Removes a callback function from the list of callbacks.
+
+    :param callback: The callback function to remove
+    :type callback: callable
+    """
+
+    if callback in __callbacks:
+        __callbacks.remove(callback)
+    else:
+        raise ValueError("Callback not found in the list of callbacks.")
+
+
+def __call_callbacks(type: str, data: str) -> None:
+    """
+    Calls all registered callback functions with the given data.
+
+    :param type: The type of the message (e.g., "log", "error", etc.)
+    :type type: str
+    :param data: The data to pass to the callback functions
+    :type data: str
+    """
+
+    for callback in __callbacks:
+        callback(type, data)
 
 
 def __get_time_str() -> str:

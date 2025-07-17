@@ -193,6 +193,12 @@ class Client:
                 # Read the response body
                 body: bytes = await response.read()
 
+                # Print the response details for debugging
+                if body != None and len(body) > 0:
+                    response_text = body.decode()
+                    if response_text != "null":
+                        printer.log(f"Response from {method} {url}: {response_text}")
+
                 # Attempt to decode the response based on the Content-Type header
                 if "Content-Type" in response.headers:
                     try:

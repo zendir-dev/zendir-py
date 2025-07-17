@@ -1199,6 +1199,11 @@ class Simulation(Context):
         # Get the state of the simulation as a raw JSON
         state: dict = await self.get_state()
 
+        # Create the directory if it does not exist
+        directory: str = os.path.dirname(path)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
         # Save the state to the path
         with open(path, "w") as file:
             json.dump(state, file)
