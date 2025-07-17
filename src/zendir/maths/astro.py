@@ -13,6 +13,7 @@ import numpy as np
 from typing import Tuple
 from . import constants
 from . import utils
+from datetime import datetime
 from .kinematics import euler2, euler3
 from .utils import normalize_angle
 from ..utils import ZendirException
@@ -2006,3 +2007,48 @@ def sun_synchronous_inclination(
         it += 1
 
     return inclination
+
+def create_sun_synchronous_orbit(
+    julian_date: float,
+    date: datetime,
+    semi_major_axis: float,
+    planet: str = "earth",
+    eccentricity: float = 0.0,
+    time_of_day: float = 0.0
+):
+    # Clamp values
+    semi_major_axis = max(get_planet_property(planet=planet, property="REQ"), semi_major_axis)
+    eccentricity = min(1, max(0, eccentricity))
+    time_of_day = min(24.0, max(0.0, time_of_day))
+
+    # Fetch the inclination (replace with your actual function)
+    inclination = sun_synchronous_inclination(
+        planet=planet, semi_major_axis=semi_major_axis, eccentricity=eccentricity
+    )
+
+    # Calculate time of day in degrees
+    tod = time_of_day * (360.0 / 24.0)
+
+    # Julian Century
+    jc = (julian_date - 2451545.0) / 36525.0
+
+    # Greenwich Mean Sidereal Time at 0h UT
+    gmst0 = (
+        280.46061837
+        + 360.98564736629 * (julian_date - 2451545)
+        + jc * jc * (0.000387933 - (jc / 38710000))
+    )
+
+    # Local Solar Time
+    lst = date.hour + date.minute / 60.0 + date.second / 3600.0
+
+    # Equation of time
+    eot = gmst0 - (lst * (360.0 / 24.0))
+
+    # RAAN in radians
+    raan = (eot + tod) * np.pi / 180.0
+    raan = normalize_angle(raan)
+
+    # Return classic elements (replace with your actual class/tuple)
+    return (semi_major_axis, eccentricity, inclination, raan, 0.0, 0.0)
+
