@@ -1202,7 +1202,10 @@ class Simulation(Context):
         # Create the directory if it does not exist
         directory: str = os.path.dirname(path)
         if not os.path.exists(directory):
-            os.makedirs(directory)
+            try:
+                os.makedirs(directory)
+            except:
+                pass
 
         # Save the state to the path
         with open(path, "w") as file:
