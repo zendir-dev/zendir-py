@@ -21,7 +21,7 @@ class Client:
 
     def __init__(
         self,
-        url: str = "https://api.zendir.io",
+        url: str = "https://api.zendir.io/v2.0",
         token: Optional[str] = None,
         timeout: Optional[float] = 30,
     ):
@@ -301,9 +301,11 @@ class Client:
             raise ValueError("Token must be provided to list sessions.")
 
         # Make a GET request to the API endpoint for listing sessions, using the requests library
+        printer.log(f"Requesting session information from {self.base_url}.")
         response = requests.get(
             f"{self.base_url}", headers={"X-Api-Key": self.token}, timeout=10
         )
+        printer.log(f"Response status code: {response.status_code}")
 
         # Check if the response was successful
         if response.status_code != 200:
@@ -415,9 +417,13 @@ class Client:
         printer.info(f"Creating a new session with version '{version}'.")
 
         # Make a POST request to the API endpoint for creating a session
-        response = requests.post(
-            f"{self.base_url}", headers={"X-Api-Key": self.token}, timeout=10, json=data
+        printer.log(
+            f"Requesting session creation at {self.base_url} with data: {data}."
         )
+        response = requests.post(
+            f"{self.base_url}", headers={"X-Api-Key": self.token}, timeout=60, json=data
+        )
+        printer.log(f"Response status code: {response.status_code}")
 
         # Check if the response was successful
         if response.status_code != 200:
@@ -456,11 +462,13 @@ class Client:
             raise ValueError("Token must be provided to delete a session.")
 
         # Make a DELETE request to the API endpoint for deleting a session
+        printer.log(f"Requesting session deletion at {self.base_url}{session_id}/.")
         response = requests.delete(
             f"{self.base_url}{session_id}/",
             headers={"X-Api-Key": self.token},
             timeout=10,
         )
+        printer.log(f"Response status code: {response.status_code}")
 
         # Check if the response was successful
         if response.status_code != 200:
