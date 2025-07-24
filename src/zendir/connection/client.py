@@ -512,4 +512,4 @@ class Client:
         """
         if "127.0.0.1" in self.url or "localhost" in self.url:
             return 1024 * 1024  # 1 MB for local API
-        return 16000  # 16 KB for cloud API
+        return 6000  # 16 KB for cloud API
