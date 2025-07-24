@@ -501,3 +501,15 @@ class Client:
 
         # Return the list of session IDs
         return session_list
+
+    def get_chunk_size(self) -> int:
+        """
+        Get the maximum chunk size for the client. This is used to limit the size of
+        requests to the API.
+
+        :return: The maximum chunk size.
+        :rtype: int
+        """
+        if "127.0.0.1" in self.url or "localhost" in self.url:
+            return 1024 * 1024  # 1 MB for local API
+        return 16000  # 16 KB for cloud API

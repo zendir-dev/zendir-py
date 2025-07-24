@@ -1233,10 +1233,20 @@ class Simulation(Context):
         # Get the extension system
         system: System = await self.get_function_library()
 
-        # Load the state of the simulation
-        success: bool = await system.invoke("SetState", state)
-        if not success:
-            return False
+        # Start by converting the state to a JSON string
+        state_json: str = json.dumps(state)
+
+        # Break it up into chunks of a maximum amount of characters
+        chunks: list[str] = []
+        CHUNK_SIZE: int = self.__client.get_chunk_size()
+        for i in range(0, len(state_json), CHUNK_SIZE):
+            chunks.append(state_json[i : i + CHUNK_SIZE])
+
+        # Now, we need to load the chunks individually
+        for index, chunk in enumerate(chunks):
+            success: bool = await system.invoke("SetState", chunk, index, len(chunks))
+            if not success:
+                return False
 
         # Next, load the cache
         await self.__load_cache()
