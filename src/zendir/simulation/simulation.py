@@ -1181,11 +1181,41 @@ class Simulation(Context):
         # Get the extension system
         system: System = await self.get_function_library()
 
-        # Get the state of the simulation as a raw JSON, not processed and deserialized
-        # (which is what .invoke does).
-        return await self.get_client().post(
-            f"{system.get_id()}/ivk", ["GetState"], id=self.get_id()
-        )
+        # Store the total data and the current page being called
+        data: str = ""
+        page_count: int = 1
+        page: int = 0
+
+        # Loop through all pages (which is at least 1)
+        while page < page_count:
+
+            # Invoke the query object on the API, with the current page
+            page_data: dict = await system.invoke("GetState", page)
+            if page_data == None:
+                return None
+
+            # If the first page, then store the page data including the metadata
+            if page == 0:
+                data = page_data["Data"]
+
+            # Otherwise, simply extend the data from the next pages
+            else:
+                data += page_data["Data"]
+
+            # Update the page count
+            # Handle the case where the page count is not present in the page data
+            if "Count" not in page_data:
+                raise ZendirException(
+                    "No data can be retrieved for this query. Make sure the data was subscribed to."
+                )
+            page_count = page_data["Count"]
+            page += 1
+
+        # Finally, we need to deserialize the data
+        try:
+            return json.loads(data)
+        except json.JSONDecodeError as e:
+            raise ZendirException("Failed to decode the state data as JSON.")
 
     async def save_state(self, path: str) -> None:
         """
