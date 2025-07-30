@@ -1,4 +1,4 @@
-nominalpy package
+zendir package
 =================
 
 Subpackages
@@ -7,17 +7,17 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   nominalpy.connection
-   nominalpy.data
-   nominalpy.maths
-   nominalpy.mqtt
-   nominalpy.simulation
-   nominalpy.utils
+   zendir.connection
+   zendir.data
+   zendir.maths
+   zendir.mqtt
+   zendir.simulation
+   zendir.utils
 
 Module contents
 ---------------
 
-.. automodule:: nominalpy
+.. automodule:: zendir
    :members:
    :undoc-members:
    :show-inheritance:

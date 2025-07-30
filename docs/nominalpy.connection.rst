@@ -1,21 +1,21 @@
-nominalpy.connection package
+zendir.connection package
 ============================
 
 Submodules
 ----------
 
-nominalpy.connection.credentials module
+zendir.connection.credentials module
 ---------------------------------------
 
-.. automodule:: nominalpy.connection.credentials
+.. automodule:: zendir.connection.credentials
    :members:
    :undoc-members:
    :show-inheritance:
 
-nominalpy.connection.http module
+zendir.connection.http module
 --------------------------------
 
-.. automodule:: nominalpy.connection.http
+.. automodule:: zendir.connection.http
    :members:
    :undoc-members:
    :show-inheritance:
@@ -23,7 +23,7 @@ nominalpy.connection.http module
 Module contents
 ---------------
 
-.. automodule:: nominalpy.connection
+.. automodule:: zendir.connection
    :members:
    :undoc-members:
    :show-inheritance:
