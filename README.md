@@ -2,13 +2,13 @@
 
 [![PyPI Version](https://img.shields.io/pypi/v/zendir.svg)](https://pypi.org/project/zendir/)
 
-zendir is a Python library that enables easy access to the Zendir API. The API is a REST interface to the Zendir simulation library, enabling simulations of spacecraft, ground stations, maritime objects and more. The API requires an [access key](#accessing-your-api-token) that is available with a free account from the Zendir website.
+`zendir` is a Python library that enables easy access to the Zendir API. The API is a REST interface to the Zendir simulation library, enabling simulations of spacecraft, ground stations, maritime objects and more. The API requires an [access key](#accessing-your-api-token) that is available with a free account from the Zendir website.
 
 Example simulation scripts and usage of the zendir library can be found in the public repository [zendir Examples](https://github.com/zendir-dev/zendir-py-examples). This contains some sample scripts showcasing how to use the library and how to run spacecraft simulations with flight software and requesting data from the simulation API. This requires an API key to execute but can be used as a basis for development.
 
 Additional tutorials and functionality for the library can be found on the public documentation at [docs.zendir.io](https://docs.zendir.io) under the Guides page.
 
-![Sun Pointing Simulation](https://docs.zendir.io/v1.1/articles/Zendir/guides/Python/GettingStarted/images/image.png)
+![Sun Pointing Simulation](https://docs.zendir.io/v1.3/articles/guides/Python/GettingStarted/images/image.png)
 
 ---
 
@@ -52,7 +52,7 @@ pip install zendir --user --upgrade
 
 API Tokens are accessible via the [Zendir Website](https://www.zendir.io/account/log-in). Create a free account and start a 14-day trial of the software. This will give you access to unlimited sessions and requests during the trial period. The access token is available from the dashboard once the account is created and logged in.
 
-To enable your token, create a Credential object and pass into the Simulation class when constructing simulations. Alternatively, if using the example library, update the token in the `credential_helper.py` class for easier access to the token over multiple files. More information can be found in the [API Access Keys](https://docs.zendir.io/v1.1/articles/Zendir/guides/Python/GettingStarted/3_APIAccessKeys/index.html).
+To enable your token, create a Credential object and pass into the Simulation class when constructing simulations. Alternatively, if using the example library, update the token in the `credential_helper.py` class for easier access to the token over multiple files. More information can be found in the [API Access Keys](https://docs.zendir.io/v1.3/articles/guides/Python/GettingStarted/3_APIAccessKeys/index.html).
 
 ---
 
@@ -121,4 +121,4 @@ data_msg = simulation.query_dataframe(spacecraft.get_message("Out_SpacecraftStat
 
 </br>
 
-![Orbit Raising Maneuver](https://docs.zendir.io/v1.0/articles/Zendir/guides/images/image_2.png)
+![Orbit Raising Maneuver](https://docs.zendir.io/v1.3/articles/guides/images/image_2.png)
