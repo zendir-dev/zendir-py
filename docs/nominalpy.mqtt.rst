@@ -1,13 +1,13 @@
-nominalpy.mqtt package
+zendir.mqtt package
 ======================
 
 Submodules
 ----------
 
-nominalpy.mqtt.client module
+zendir.mqtt.client module
 ----------------------------
 
-.. automodule:: nominalpy.mqtt.client
+.. automodule:: zendir.mqtt.client
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,7 +15,7 @@ nominalpy.mqtt.client module
 Module contents
 ---------------
 
-.. automodule:: nominalpy.mqtt
+.. automodule:: zendir.mqtt
    :members:
    :undoc-members:
    :show-inheritance:

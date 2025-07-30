@@ -1,61 +1,61 @@
-nominalpy.simulation package
+zendir.simulation package
 ============================
 
 Submodules
 ----------
 
-nominalpy.simulation.behaviour module
+zendir.simulation.behaviour module
 -------------------------------------
 
-.. automodule:: nominalpy.simulation.behaviour
+.. automodule:: zendir.simulation.behaviour
    :members:
    :undoc-members:
    :show-inheritance:
 
-nominalpy.simulation.instance module
+zendir.simulation.instance module
 ------------------------------------
 
-.. automodule:: nominalpy.simulation.instance
+.. automodule:: zendir.simulation.instance
    :members:
    :undoc-members:
    :show-inheritance:
 
-nominalpy.simulation.message module
+zendir.simulation.message module
 -----------------------------------
 
-.. automodule:: nominalpy.simulation.message
+.. automodule:: zendir.simulation.message
    :members:
    :undoc-members:
    :show-inheritance:
 
-nominalpy.simulation.model module
+zendir.simulation.model module
 ---------------------------------
 
-.. automodule:: nominalpy.simulation.model
+.. automodule:: zendir.simulation.model
    :members:
    :undoc-members:
    :show-inheritance:
 
-nominalpy.simulation.object module
+zendir.simulation.object module
 ----------------------------------
 
-.. automodule:: nominalpy.simulation.object
+.. automodule:: zendir.simulation.object
    :members:
    :undoc-members:
    :show-inheritance:
 
-nominalpy.simulation.simulation module
+zendir.simulation.simulation module
 --------------------------------------
 
-.. automodule:: nominalpy.simulation.simulation
+.. automodule:: zendir.simulation.simulation
    :members:
    :undoc-members:
    :show-inheritance:
 
-nominalpy.simulation.system module
+zendir.simulation.system module
 ----------------------------------
 
-.. automodule:: nominalpy.simulation.system
+.. automodule:: zendir.simulation.system
    :members:
    :undoc-members:
    :show-inheritance:
@@ -63,7 +63,7 @@ nominalpy.simulation.system module
 Module contents
 ---------------
 
-.. automodule:: nominalpy.simulation
+.. automodule:: zendir.simulation
    :members:
    :undoc-members:
    :show-inheritance:
