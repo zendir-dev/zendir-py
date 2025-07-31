@@ -25,7 +25,7 @@ R2D: float = 180.0 / M_PI
 """[-] Radians to Degrees constant"""
 
 RPM: float = 0.10471975511965977
-"""[-] Conversion from rad/s to revolutions per minute"""
+"""[-] Conversion from revolutions per minute to rad/s"""
 
 SEC2DAY: float = 1.0 / (60.0 * 60.0 * 24.0)
 """[d] The number of days in a second"""
