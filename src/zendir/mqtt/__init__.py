@@ -1,1 +1,1 @@
-from .client import Client as MqttClient
+from .client import MqttClient as MqttClient
