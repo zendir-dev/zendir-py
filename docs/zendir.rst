@@ -1,5 +1,5 @@
 zendir package
-=================
+==============
 
 Subpackages
 -----------
@@ -19,5 +19,5 @@ Module contents
 
 .. automodule:: zendir
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

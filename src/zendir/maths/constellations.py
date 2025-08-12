@@ -690,8 +690,8 @@ class CoplanarCircular(Coplanar):
         self._eccentricity = 0.0
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
         self.eccentricity = 0
+        super().__init__(**kwargs)
 
 
 class Walker(Constellation):
@@ -727,8 +727,8 @@ class Walker(Constellation):
         self._num_planes = num_planes
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
         self.num_planes = kwargs.get("num_planes", 1)
+        super().__init__(**kwargs)
 
 
 class WalkerDelta(Walker):
@@ -758,14 +758,14 @@ class WalkerDelta(Walker):
             relative_spacing = float(relative_spacing)
         except Exception as e:
             raise TypeError
-        # ensure the relative spacing is greater than 0
+        # ensure the relative spacing is greater than or equal to 0
         if relative_spacing < 0:
             raise ValueError
         self._relative_spacing = relative_spacing
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
         self.relative_spacing = kwargs.get("relative_spacing", 1.0)
+        super().__init__(**kwargs)
 
     def init_classical_elements(self, *args, **kwargs):
         """
@@ -804,9 +804,7 @@ class WalkerDelta(Walker):
                 self.spacecraft[index]["eccentricity"] = self.eccentricity
                 self.spacecraft[index]["inclination"] = self.inclination
                 self.spacecraft[index]["right_ascension"] = raan
-                self.spacecraft[index][
-                    "argument_of_periapsis"
-                ] = self.argument_of_periapsis
+                self.spacecraft[index]["argument_of_periapsis"] = self.argument_of_periapsis
                 self.spacecraft[index]["true_anomaly"] = true_anom
         # return the orbital elements
         return self._spacecraft
