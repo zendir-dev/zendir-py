@@ -21,7 +21,7 @@ SERVER_TIMEOUT: int = 5
 """The server timeout in seconds to keep the connection alive for."""
 
 
-class Client:
+class MqttClient:
     """
     This client acts as an MQTT interface with python, allowing for
     callbacks from topic subscriptions and publishing messages over
