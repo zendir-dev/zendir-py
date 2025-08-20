@@ -6,7 +6,7 @@
 import json
 
 
-def create_command(trigger: dict, command: str, parameters: dict, priority: int = 0) -> dict:
+def create_command(trigger: dict, type: str, parameters: dict, priority: int = 0) -> dict:
     """
     Creates a command with a list of arguments as the parameters. This will create the JSON
     object with the list of parameters required.
@@ -27,7 +27,7 @@ def create_command(trigger: dict, command: str, parameters: dict, priority: int 
 
     # Set the 'command' field of the JSON object
     cmd["Trigger"] = trigger
-    cmd["Type"] = command
+    cmd["Type"] = type
 
     # Initialize an empty dictionary for parameters
     param_obj = {}
@@ -104,31 +104,6 @@ def create_guidance_configure_command(
     """
     # Return the generated command by calling create_command with the arguments
     return create_command(trigger, "GuidanceConfigure", parameters, priority)
-
-# def create_guidance_command_string(
-#     navigation: str, pointing: str, controller: str, mapping: str, time: float
-# ) -> str:
-#     """
-#     Creates a guidance command for the spacecraft operation computer and returns it as a JSON string.
-
-#     :param navigation: The navigation mode to set.
-#     :type navigation: str
-#     :param pointing: The pointing mode to set.
-#     :type pointing: str
-#     :param controller: The controller mode to set.
-#     :type controller: str
-#     :param mapping: The mapping mode to set.
-#     :type mapping: str
-#     :param time: The time [s] at which the command is executed.
-#     :type time: float
-#     :return: The JSON command as a string.
-#     :rtype: str
-#     """
-#     # Generate the command as a dictionary
-#     command = create_guidance_command(navigation, pointing, controller, mapping, time)
-
-#     # Convert the command dictionary to a JSON string and return it
-#     return json.dumps(command)
 
 def create_event_trigger(type: str, repeat: bool = False, is_done: bool = False) -> dict:
     """
