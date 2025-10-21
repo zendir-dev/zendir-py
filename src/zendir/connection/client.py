@@ -11,6 +11,7 @@ import asyncio, aiohttp, json, atexit
 import requests, time
 from typing import Optional, Union, Dict, Any, List
 from zendir import __version__ as zendir_version
+from zendir.http import rqst
 
 
 class Client:
@@ -147,75 +148,9 @@ class Client:
         :return: Response data as a dictionary or string.
         """
 
-        # Creates the data and headers for the request
-        try:
-            body = None
-            headers = {}
-            if data:
-                if isinstance(data, str):
-                    body = data.encode("utf-8")
-                    headers["Content-Type"] = "text/plain"
-                    headers["Content-Length"] = str(len(body))
-                elif isinstance(data, (list, dict)):
-                    body = json.dumps(data).encode()
-                    headers["Content-Type"] = "application/json"
-                    headers["Content-Length"] = str(len(body))
-
-        # Catch any exceptions that occur during data preparation
-        except Exception as e:
-            raise ZendirException(f"Failed to prepare request data: {e}")
-
-        # Add the token to the headers if it exists
-        if self.token:
-            headers["X-Api-Key"] = self.token
-
-        # Define the URL for the request
         url = f"{self.url}{endpoint.lstrip('/')}"
-
-        # Print the request details for debugging
-        printer.log(f"Requesting {method} {url} with data: {data}")
-
-        # Open a new session
-        async with aiohttp.ClientSession() as session:
-
-            # Create a request and read the response
-            async with session.request(
-                method, url, data=body, headers=headers, timeout=self.timeout
-            ) as response:
-
-                # Check the status of the response
-                if response.status != 200:
-                    content_data: str = await response.text()
-                    raise ZendirException(
-                        f"Request failed with status {response.status}: {content_data}"
-                    )
-
-                # Read the response body
-                body: bytes = await response.read()
-
-                # Print the response details for debugging
-                if body != None and len(body) > 0:
-                    response_text = body.decode()
-                    if response_text != "null":
-                        printer.log(f"Response from {method} {url}: {response_text}")
-
-                # Attempt to decode the response based on the Content-Type header
-                if "Content-Type" in response.headers:
-                    try:
-                        match response.headers["Content-Type"]:
-                            case "text/plain":
-                                return body.decode()
-                            case "application/json":
-                                return json.loads(body.decode())
-                            case _:
-                                return None
-
-                    # Raise an exception if the response cannot be decoded
-                    except Exception as e:
-                        raise ZendirException(f"Failed to decode response: {e}")
-
-                # Return None if no Content-Type header is present
-                return None
+        printer.log(f":: {method} {url} {data}")
+        return await rqst(method, url, data, { "X-Api-Key": self.token } if self.token else None)
 
     async def get(self, endpoint: str, id: str = "default"):
         """
