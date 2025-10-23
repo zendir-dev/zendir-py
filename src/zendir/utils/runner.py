@@ -50,9 +50,16 @@ def run_simulation(
         simulation: Simulation = await Simulation.create(client)
 
         # Run the main function with the simulation and additional arguments
-        await main(simulation, *args, **kwargs)
+        try:
+            await main(simulation, *args, **kwargs)
 
-        # If dispose is True, dispose of the simulation handle
+        # In case of an exception, dispose of the simulation if required
+        except Exception as e:
+            if dispose and simulation.is_valid():
+                await simulation.dispose()
+            raise e
+
+        # Dispose of the simulation if required
         if dispose and simulation.is_valid():
             await simulation.dispose()
 
