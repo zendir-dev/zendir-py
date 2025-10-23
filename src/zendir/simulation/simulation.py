@@ -1470,7 +1470,7 @@ class Simulation(Context):
         # Invoke the set track interval
         await system.set(Interval=interval)
 
-    async def track_object(self, instance: Instance, isAdvanced: bool = False) -> None:
+    async def track_object(self, instance: Instance, is_advanced: bool = False) -> None:
         """
         Starts tracking the object within the simulation. This will start tracking the object
         which will store the object's data and state every specified tick in a local database.
@@ -1478,8 +1478,8 @@ class Simulation(Context):
 
         :param instance:    The instance to track within the simulation
         :type instance:     Instance
-        :param isAdvanced:  Whether the advanced variables are also being tracked
-        :type isAdvanced:   bool
+        :param is_advanced:  Whether the advanced variables are also being tracked
+        :type is_advanced:   bool
         """
 
         # Throw exception if the simulation is not valid
@@ -1496,7 +1496,7 @@ class Simulation(Context):
             raise ZendirException("Failed to track object as the ID was not valid.")
 
         # Invoke the track object on the API, with the ID and whether it is advanced
-        await system.invoke("TrackObject", id, isAdvanced)
+        await system.invoke("TrackObject", id, is_advanced)
 
     async def query_object(self, instance: Instance) -> SimulationData:
         """
