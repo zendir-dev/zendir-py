@@ -3,6 +3,7 @@
 # See the 'LICENSE' file at the root of this package
 # ---------------------------------------------------------------------------------------------------------------------------- #
 import aiohttp, json, typing
+from ..utils import ZendirException
 # ---------------------------------------------------------------------------------------------------------------------------- #
 
 async def rqst(method: str, url: str, data: typing.Any = None, headers: dict = None) -> typing.Any:
@@ -13,7 +14,7 @@ async def rqst(method: str, url: str, data: typing.Any = None, headers: dict = N
 
     # parse HTTP request headers
     if headers and not isinstance(headers, dict):
-        raise Exception("invalid argument 'headers'")
+        raise ZendirException("invalid argument 'headers'")
 
     # parse HTTP request content body
     content = None
@@ -28,7 +29,7 @@ async def rqst(method: str, url: str, data: typing.Any = None, headers: dict = N
             headers["Content-Type"]   = "application/json"
             headers["Content-Length"] = str(len(content))
         else:
-            raise Exception("invalid argument 'body'")
+            raise ZendirException("invalid argument 'body'")
 
     # send HTTP request and wait for response
     results = {}
@@ -38,10 +39,10 @@ async def rqst(method: str, url: str, data: typing.Any = None, headers: dict = N
             results["status"]  = response.status
             results["headers"] = dict(response.headers)
     if results["status"] != 200:
-        raise Exception(results["body"].decode() if results["body"] else "")
+        raise ZendirException(results["body"].decode() if results["body"] else "")
     if results["body"]:
         if "Content-Type" not in results["headers"]:
-            raise Exception("missing 'Content-Type'")
+            raise ZendirException("missing 'Content-Type'")
         match results["headers"]["Content-Type"]:
             case "text/plain":
                 return results["body"].decode()
