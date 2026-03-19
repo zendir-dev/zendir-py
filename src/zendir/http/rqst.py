@@ -29,7 +29,7 @@ async def rqst(method: str, url: str, data: typing.Any = None, headers: dict = N
             headers["Content-Type"]   = "application/json"
             headers["Content-Length"] = str(len(content))
         else:
-            raise ZendirException("invalid argument 'body'")
+            raise ZendirException("invalid argument 'data'")
 
     # send HTTP request and wait for response
     results = {}
