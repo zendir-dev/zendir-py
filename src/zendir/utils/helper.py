@@ -101,7 +101,7 @@ def serialize(value: any) -> any:
 
     # Check if the value is a datetime
     if isinstance(value, datetime):
-        return value.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+        return value.strftime("%Y-%m-%dT%H:%M:%S.%f0")
 
     # Check if the value is a simulation instance
     if hasattr(value, "get_id") and hasattr(value, "get_type"):
@@ -142,7 +142,7 @@ def deserialize(value: any) -> any:
     if isinstance(value, str):
 
         # Regular expression to match the expected datetime format
-        datetime_regex = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{7}Z$"
+        datetime_regex = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{7}$"
 
         # Check if the value matches the expected format
         if re.match(datetime_regex, value):
