@@ -1374,7 +1374,7 @@ class Simulation(Context):
         the default step of 0.1 seconds will be used. If the step is too small, it will do the final
         step with the remaining time.
 
-        :param time:    The totalamount of time to tick the simulation by in seconds
+        :param time:    The total amount of time to tick the simulation by in seconds
         :type time:     float
         :param step:    The time-step of the tick, used for physics calculations in seconds
         :type step:     float
